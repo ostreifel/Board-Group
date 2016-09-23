@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "vsts-extension-ts-seed-simple",
-    "version": "0.1.24",
+    "version": "0.1.27",
     "name": "vsts-extension-ts-seed-simple",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Describe your extension.",
