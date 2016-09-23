@@ -1,4 +1,4 @@
-import {BoardControl, IBoardControlOptions} from "BoardControl";
+import {BoardControl, IBoardControlOptions} from "./BoardControl";
 import Controls = require("VSS/Controls");
 
 let options: IBoardControlOptions = {
