@@ -22,6 +22,9 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
             value: this._options.columnValue,
             change: () => {
                 let columnValue = this.lane.getInputText();
+                if (this._options.allowedColumnValues.indexOf(columnValue) === -1) {
+                    return;
+                } 
                 console.log(`Setting the column value to ${columnValue}`)
                 this._options.setColumn(columnValue)
                 .then(() => {
@@ -37,6 +40,9 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
             value: this._options.laneValue,
             change: () => {
                 let laneValue = this.lane.getInputText();
+                if (this._options.allowedLaneValues.indexOf(laneValue) === -1) {
+                    return;
+                } 
                 console.log(`Setting the lane value to ${laneValue}`);
                 this._options.setLane(laneValue)
                 .then(() => {
