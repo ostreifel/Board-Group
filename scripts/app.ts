@@ -1,22 +1,23 @@
-// import { MessageHelper } from "./logic/messageHelper";
+import Controls = require("VSS/Controls");
 
-// var actionProvider =  {
-//     getMenuItems: (context) => {
-//         return [<IContributedMenuItem>{
-//             title: "Work Item Menu Action",
-//             action: (actionContext) => {
-//                 let workItemId = actionContext.id
-//                     || (actionContext.ids && actionContext.ids.length > 0 && actionContext.ids[0])
-//                     || (actionContext.workItemIds && actionContext.workItemIds.length > 0 && actionContext.workItemIds[0]);
-                    
-//                 if (workItemId) {
-//                     let messageHelper = new MessageHelper();
-//                     alert(messageHelper.format([workItemId]));
-//                 }
-//             }
-//         }];
-//     }
-// };
+export class BoardControl extends Controls.BaseControl {
+    private columnValue: JQuery;
+    private laneValue: JQuery;
+    public initialize() {
+        this.columnValue = $('<div/>').text("Sample Column");
+        this.laneValue = $('<div/>').text("Sample Column");
+        var boardLink = "sample link";
+        this._element
+            .append($('<a/>').text("Sample board link").attr("href", boardLink))
+            .append($('<h4/>').text('Board Column'))
+            .append(this.columnValue)
+            .append($('<h4/>').text('Board Lane'))
+            .append(this.laneValue);
+    }
+
+}
+
+Controls.Enhancement.registerEnhancement(BoardControl, '.board-control');
 
 // Register context menu action provider
 const publisherId = VSS.getExtensionContext().publisherId;
