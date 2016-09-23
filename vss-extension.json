@@ -1,48 +1,80 @@
-    {
-        "manifestVersion": 1,
-        "id": "sample-extension",
-        "version": "0.1.4",
-        "name": "My first sample extension",
-        "description": "A sample Visual Studio Services extension.",
-        "publisher": "ottostreifel",
-        "targets": [
-            {
-                "id": "Microsoft.VisualStudio.Services"
-                }
+{
+    "manifestVersion": 1,
+    "id": "vsts-extension-ts-seed-simple",
+    "version": "0.1.2",
+    "name": "vsts-extension-ts-seed-simple",
+    "scopes": [ "vso.work", "vso.work_write" ],
+    "description": "Describe your extension.",
+    "publisher": "ottostreifel",
+    "icons": {
+        "default": "img/logo.png"
+    },
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "tags": [
+        "Sample"
+    ],
+    "content": {
+        "details": {
+            "path": "details.md"
+        }
+    },
+    "links": {
+        "home": {
+            "uri": "https://bit.ly"
+        },
+        "getstarted": {
+            "uri": "https://bit.ly"
+        },
+        "learn": {
+            "uri": "https://bit.ly"
+        },
+        "support": {
+            "uri": "https://bit.ly"
+        },
+        "repository": {
+            "uri": "https://bit.ly"
+        },
+        "issues": {
+            "uri": "https://bit.ly"
+        }
+    },
+    "branding": {
+        "color": "rgb(220, 235, 252)",
+        "theme": "light"
+    },
+    "files": [
+        {
+            "path": "img",
+            "addressable": true
+        },
+        {
+            "path": "build",
+            "addressable": true
+        },
+        {
+            "path": "index.html",
+            "addressable": true
+        }
+    ],
+    "categories": [
+        "Integrate"
+    ],
+    "contributions": [
+        {
+            "id": "vsts-extension-ts-seed-simple-action",
+            "type": "ms.vss-web.action-provider",
+            "description": "",
+            "targets": [
+                "ms.vss-work-web.work-item-context-menu"
             ],
-        "icons": {
-            "default": "images/logo.png"
-         },
-        "contributions": [
-            {  
-                "id": "sample-work-item-form-group",
-                "type": "ms.vss-work-web.work-item-form-group",
-                "description": "Custom work item form group",
-                "targets": [
-                    "ms.vss-work-web.work-item-form"
-                ],
-                "properties": {
-                    "name": "My Group",
-                    "uri": "group.html",
-                    "height": 600
-                }
+            "properties": {
+                "group": "contributed",
+                "uri": "index.html"
             }
-        ],
-        "scopes": [
-            "vso.work"
-        ],
-        "files": [
-            {
-                "path": "group.html", "addressable": true
-            },
-            {
-                "path": "scripts", "addressable": true
-            },
-            {
-                "path": "sdk/scripts", "addressable": true
-            },
-            {
-                "path": "images/logo.png", "addressable": true
-            }
-        ]
-    }
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "sourceMap": false,
+        "rootDir": "./scripts"
+    },
+    "filesGlob": [
+        "./scripts/**/*.ts",
+        "!**/*.tests.ts",
+        "./typings/index.d.ts"
+    ],
+    "files": [
+        "scripts/app.ts",
+        "scripts/logic/messageHelper.ts",
+        "typings/index.d.ts"
+    ]
+}
