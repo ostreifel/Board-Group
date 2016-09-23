@@ -33,7 +33,7 @@
         ],
         "files": [
             {
-                "path": "hello-world.html", "addressable": true
+                "path": "group.html", "addressable": true
             },
             {
                 "path": "scripts", "addressable": true
