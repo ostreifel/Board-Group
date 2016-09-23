@@ -2,11 +2,22 @@ import {BoardControl, IBoardControlOptions} from "./BoardControl";
 import Controls = require("VSS/Controls");
 
 let options: IBoardControlOptions = {
-    boardLink: "sample link",
-    boardName: "Sample board name",
-    columnValue: "Sample board column value",
-    laneValue: "Sample board lane value"
-    /** potentially a helper object here for callbacks */
+    columnValue: "Sample column value",
+    allowedColumnValues: ["Sample column value", "Sample column value2"],
+    setColumn: (columnValue: string)=>{
+        var defer = Q.defer<string>();
+        defer.resolve(columnValue);
+        return defer.promise;
+    },
+    laneValue: "Sample lane value",
+    allowedLaneValues: ["Sample lane value", "Sample lane value2"],
+    setLane: (columnValue: string)=>{
+        var defer = Q.defer<string>();
+        defer.resolve(columnValue);
+        return defer.promise;
+    },
+    boardName: "Board name",
+    boardLink: "Board link"
 };
 Controls.Enhancement.registerEnhancement(BoardControl, '.board-control', options);
 

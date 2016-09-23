@@ -2,9 +2,14 @@ import Controls = require("VSS/Controls");
 
 export interface IBoardControlOptions {
     columnValue: string;
+    allowedColumnValues: string[];
+    setColumn: (columnValue: string)=>IPromise<string>;
     laneValue: string;
+    allowedLaneValues: string[];
+    setLane: (laneValue: string)=>IPromise<string>;
     boardName: string;
     boardLink: string;
+
 }
 export class BoardControl extends Controls.Control<IBoardControlOptions> {
     private columnValue: JQuery;
