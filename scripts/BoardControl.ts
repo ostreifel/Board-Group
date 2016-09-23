@@ -27,7 +27,8 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
                 .then(() => {
                     console.log(`Set the column value to ${columnValue}`)
                 });
-            }
+            },
+
 
         };
         let laneOptions: Combos.IComboOptions = {
@@ -47,10 +48,12 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
         let boardLink = $('<a/>').text(this._options.boardName)
             .attr("href", this._options.boardLink); 
         this._element.append(boardLink);
-        this._element.append($('<h4/>').text('Board Column'));
-        this.column = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, this._element, columnOptions);
-        this._element.append($('<h4/>').text('Board Lane'));
-        this.lane = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, this._element, laneOptions);
+        let boardFields = $('<div/>');
+        boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
+        this.column = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, columnOptions);
+        boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
+        this.lane = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, laneOptions);
+        this._element.append(boardFields);
     }
 
 }
