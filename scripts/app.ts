@@ -4,11 +4,11 @@ export class BoardControl extends Controls.BaseControl {
     private columnValue: JQuery;
     private laneValue: JQuery;
     public initialize() {
-        this.columnValue = $('<div/>').text("Sample Column");
-        this.laneValue = $('<div/>').text("Sample Column");
+        this.columnValue = $('<div/>').text("Sample Column value");
+        this.laneValue = $('<div/>').text("Sample Column value");
         var boardLink = "sample link";
         this._element
-            .append($('<a/>').text("Sample board link").attr("href", boardLink))
+            .append($('<a/>').text("Sample board name").attr("href", boardLink))
             .append($('<h4/>').text('Board Column'))
             .append(this.columnValue)
             .append($('<h4/>').text('Board Lane'))
