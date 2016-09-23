@@ -1,23 +1,14 @@
+import {BoardControl, IBoardControlOptions} from "BoardControl";
 import Controls = require("VSS/Controls");
 
-export class BoardControl extends Controls.BaseControl {
-    private columnValue: JQuery;
-    private laneValue: JQuery;
-    public initialize() {
-        this.columnValue = $('<div/>').text("Sample Column value");
-        this.laneValue = $('<div/>').text("Sample Column value");
-        var boardLink = "sample link";
-        this._element
-            .append($('<a/>').text("Sample board name").attr("href", boardLink))
-            .append($('<h4/>').text('Board Column'))
-            .append(this.columnValue)
-            .append($('<h4/>').text('Board Lane'))
-            .append(this.laneValue);
-    }
-
-}
-
-Controls.Enhancement.registerEnhancement(BoardControl, '.board-control');
+let options: IBoardControlOptions = {
+    boardLink: "sample link",
+    boardName: "Sample board name",
+    columnValue: "Sample board column value",
+    laneValue: "Sample board lane value"
+    /** potentially a helper object here for callbacks */
+};
+Controls.Enhancement.registerEnhancement(BoardControl, '.board-control', options);
 
 // Register context menu action provider
 const publisherId = VSS.getExtensionContext().publisherId;
