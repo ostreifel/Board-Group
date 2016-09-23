@@ -1,0 +1,48 @@
+    {
+        "manifestVersion": 1,
+        "id": "sample-extension",
+        "version": "0.1.4",
+        "name": "My first sample extension",
+        "description": "A sample Visual Studio Services extension.",
+        "publisher": "ottostreifel",
+        "targets": [
+            {
+                "id": "Microsoft.VisualStudio.Services"
+                }
+            ],
+        "icons": {
+            "default": "images/logo.png"
+         },
+        "contributions": [
+            {  
+                "id": "sample-work-item-form-group",
+                "type": "ms.vss-work-web.work-item-form-group",
+                "description": "Custom work item form group",
+                "targets": [
+                    "ms.vss-work-web.work-item-form"
+                ],
+                "properties": {
+                    "name": "My Group",
+                    "uri": "group.html",
+                    "height": 600
+                }
+            }
+        ],
+        "scopes": [
+            "vso.work"
+        ],
+        "files": [
+            {
+                "path": "hello-world.html", "addressable": true
+            },
+            {
+                "path": "scripts", "addressable": true
+            },
+            {
+                "path": "sdk/scripts", "addressable": true
+            },
+            {
+                "path": "images/logo.png", "addressable": true
+            }
+        ]
+    }
