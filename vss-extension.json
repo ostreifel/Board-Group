@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "vsts-extension-ts-seed-simple",
-    "version": "0.1.2",
+    "version": "0.1.6",
     "name": "vsts-extension-ts-seed-simple",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Describe your extension.",
@@ -64,16 +64,17 @@
         "Integrate"
     ],
     "contributions": [
-        {
-            "id": "vsts-extension-ts-seed-simple-action",
-            "type": "ms.vss-web.action-provider",
-            "description": "",
+        {  
+            "id": "board-work-item-form-group",
+            "type": "ms.vss-work-web.work-item-form-group",
+            "description": "Custom work item form group",
             "targets": [
-                "ms.vss-work-web.work-item-context-menu"
+                "ms.vss-work-web.work-item-form"
             ],
             "properties": {
-                "group": "contributed",
-                "uri": "index.html"
+                "name": "My Group",
+                "uri": "index.html",
+                "height": 600
             }
         }
     ]
