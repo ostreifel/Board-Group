@@ -29,6 +29,37 @@ export function getBoardOptions() {
     let rejectOnError = (error) => {optionsDeferred.reject(error)};
 
 
+    let getBoardUrl = (referenceName: string) => {
+        let teamContext: TeamContext = {
+            project : VSS.getWebContext().project.name,
+            projectId : VSS.getWebContext().project.id,
+            team : VSS.getWebContext().team.name,
+            teamId : VSS.getWebContext().team.id
+        };
+
+        let client = RestClient.getClient();
+        client.getBoards(teamContext).then(
+            (boards) => {
+                if (boards.length === 0) {
+                    rejectOnError("There were no boards");
+                    return;
+                }
+                //TODO optimize this, dont go through every board. This will require an api.
+                for (var i in boards) {
+                    client.getBoard(teamContext, boards[i].id).then((board) => {
+                        if (board.fields.columnField.referenceName === referenceName) {
+                            boardOptions.boardName = board.name
+                            var accountName = VSS.getWebContext().account.name;
+                            var projectName = VSS.getWebContext().project.name;
+                            var uri = VSS.getWebContext().host.uri;
+                            boardOptions.boardUrl = `${uri}${projectName}/_backlogs/board/${boardOptions.boardName}`;
+                            resolveIfDone();
+                        }
+                    }, rejectOnError);
+                }
+            }, rejectOnError);
+    }
+
     WorkItemFormService.getService().then((service) => {
         // Get the current values for board info
         service.getFieldValues(["System.BoardColumn","System.BoardLane"]).then( (values) => {
@@ -37,33 +68,17 @@ export function getBoardOptions() {
             boardOptions.laneValue = <string>values["System.BoardLane"];
             resolveIfDone();
         }, rejectOnError)
+
+        service.getFields().then((fields) => {
+            for (let i in fields) {
+                var field = fields[i];
+                if (field.referenceName && field.referenceName.match(/_Kanban\.Column$/)) {
+                    getBoardUrl(field.referenceName);
+                    break;
+                }
+            }
+        }, rejectOnError)
     }, rejectOnError);
 
-    
-    var teamContext: TeamContext = {
-        project : VSS.getWebContext().project.name,
-        projectId : VSS.getWebContext().project.id,
-        team : VSS.getWebContext().team.name,
-        teamId : VSS.getWebContext().team.id
-    };
-    var boardName = "";
-    var client = RestClient.getClient();
-    console.log("pageContext:");
-    console.log(VSS.getWebContext().host.uri);
-
-
-    client.getBoards(teamContext).then(
-        (boards) => {
-            if (boards.length === 0) {
-                rejectOnError("There were no boards");
-                return;
-            }
-            boardOptions.boardName = boards[0].name;
-            
-            var accountName = VSS.getWebContext().account.name;
-            var teamName = VSS.getWebContext().team.name;
-            boardOptions.boardUrl = `http://${window.location.host}/${teamName}/_backlogs/board/${boardOptions.boardName}`;
-            resolveIfDone();
-        }, rejectOnError);
     return optionsDeferred.promise;
 }
