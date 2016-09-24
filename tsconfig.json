@@ -11,8 +11,8 @@
     ],
     "files": [
         "scripts/app.ts",
-        "scripts/WITFormSvcHelper.ts",
         "scripts/BoardControl.ts",
+        "scripts/getBoardOptions.ts",
         "typings/index.d.ts"
     ]
 }
