@@ -23,26 +23,36 @@ export class BoardControl extends Controls.Control<IPromise<IBoardControlOptions
     }
     private initializeInternal(options: IBoardControlOptions) {
         let columnOptions: Combos.IComboOptions = {
-            type: 'list',
             value: options.columnValue,
+            mode: 'text',
+            enabled: false
         };
         let laneOptions: Combos.IComboOptions = {
-            type: 'list',
             value: options.laneValue,
+            mode: 'text',
+            enabled: false
         };
 
+        if (!options.boardName) {
+            this._element.append($('<p/>').text('No board found'));
+            return;
+        }
         let boardLink = $('<a/>').text(options.boardName)
             .attr({
                 href: options.boardUrl, 
                 target:"_parent"
             });
 
-        this._element.append(boardLink);
+        this._element.append(boardLink).append($('<br><br>'));
         let boardFields = $('<div/>');
-        boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
-        this.column = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, columnOptions);
-        boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
-        this.lane = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, laneOptions);
+        if (options.columnValue) {
+            boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
+            this.column = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, columnOptions);
+        }
+        if (options.laneValue) {
+            boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
+            this.lane = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, laneOptions);
+        }
         this._element.append(boardFields);
     }
 

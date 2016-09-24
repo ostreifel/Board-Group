@@ -74,9 +74,11 @@ export function getBoardOptions() {
                 var field = fields[i];
                 if (field.referenceName && field.referenceName.match(/_Kanban\.Column$/)) {
                     getBoardUrl(field.referenceName);
-                    break;
+                    return;
                 }
             }
+            boardOptions.boardName = boardOptions.boardUrl = "";
+            resolveIfDone();
         }, rejectOnError)
     }, rejectOnError);
 

@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "vsts-extension-ts-seed-simple",
-    "version": "0.1.38",
+    "version": "0.1.48",
     "name": "vsts-extension-ts-seed-simple",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Describe your extension.",
@@ -72,7 +72,7 @@
                 "ms.vss-work-web.work-item-form"
             ],
             "properties": {
-                "name": "Board Group",
+                "name": "Board",
                 "uri": "index.html",
                 "height": 600
             }
