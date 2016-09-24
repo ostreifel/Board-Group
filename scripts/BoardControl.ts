@@ -5,14 +5,14 @@ import Combos = require("VSS/Controls/Combos");
 import RestClient = require("TFS/Work/RestClient");
 
 export interface IBoardControlOptions {
-    columnValue: IPromise<string>;
-    allowedColumnValues: IPromise<string[]>;
-    setColumn: (columValue: string)=>IPromise<void>;
-    laneValue:  IPromise<string>;
-    allowedLaneValues:  IPromise<string[]>;
-    setLane: (laneValue: string)=>IPromise<void>;
+    columnValue: string;
+    // allowedColumnValues: string[];
+    // setColumn: (columValue: string)=>IPromise<void>;
+    laneValue:  string;
+    // allowedLaneValues:  string[];
+    // setLane: (laneValue: string)=>IPromise<void>;
     boardName: string;
-    boardLink: string;
+    boardUrl: string;
 }
 
 export class BoardControl extends Controls.Control<IBoardControlOptions> {
@@ -44,40 +44,54 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
         var boardUrl = "http://" + accountName + ".visualstudio.com/" + teamName + "/_backlogs/board/" + boardName;
         console.log(boardUrl);
 
+        this._options.boardName.then(
+            (boardName) => {
+                this._options.boardUrl.then(
+                    (boardUrl) => {
+                        this._options.columnValue.then(
+                            
+                        )
+                    }
+                )
+            }
+        )
+   WITFormSvcHelper.getcoline( ()=> control._setCN())
 
+    }
+    private initializeInternal(columnValue: string, laneValue:string, boardName: string, boardUrl: string) {
         let columnOptions: Combos.IComboOptions = {
             type: 'list',
-            source: allowedColumnValues,
+            // source: allowedColumnValues,
             value: columnValue,
-            change: () => {
-                let columnValue = this.lane.getInputText();
-                if (allowedColumnValues.indexOf(columnValue) === -1) {
-                    return;
-                } 
-                console.log(`Setting the column value to ${columnValue}`)
-                this._options.setColumn(columnValue)
-                .then(() => {
-                    console.log(`Set the column value to ${columnValue}`)
-                });
-            },
+            // change: () => {
+            //     let columnValue = this.lane.getInputText();
+            //     if (allowedColumnValues.indexOf(columnValue) === -1) {
+            //         return;
+            //     } 
+            //     console.log(`Setting the column value to ${columnValue}`)
+            //     this._options.setColumn(columnValue)
+            //     .then(() => {
+            //         console.log(`Set the column value to ${columnValue}`)
+            //     });
+            // },
 
 
         };
         let laneOptions: Combos.IComboOptions = {
             type: 'list',
-            source: allowedLaneValues,
+            // source: allowedLaneValues,
             value: laneValue,
-            change: () => {
-                let laneValue = this.lane.getInputText();
-                if (allowedLaneValues.indexOf(laneValue) === -1) {
-                    return;
-                } 
-                console.log(`Setting the lane value to ${laneValue}`);
-                this._options.setLane(laneValue)
-                .then(() => {
-                    console.log(`Set the lane value to ${laneValue}`);
-                });
-            }
+            // change: () => {
+            //     let laneValue = this.lane.getInputText();
+            //     if (allowedLaneValues.indexOf(laneValue) === -1) {
+            //         return;
+            //     } 
+            //     console.log(`Setting the lane value to ${laneValue}`);
+            //     this._options.setLane(laneValue)
+            //     .then(() => {
+            //         console.log(`Set the lane value to ${laneValue}`);
+            //     });
+            // }
         };
 
         let boardLink = $('<a/>').text(this._options.boardName)

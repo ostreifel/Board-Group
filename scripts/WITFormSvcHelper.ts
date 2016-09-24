@@ -1,97 +1,38 @@
 import {WorkItemFormService} from "TFS/WorkItemTracking/Services";
+import {IBoardControlOptions} from "./BoardControl";
 import Q = require("q");
 
-export class WITFormSvcHelper {
+export function getBoardOptions() {
+    let boardOptions: IBoardControlOptions= {
+            // allowedColumnValues: null,
+            // allowedLaneValues: null,
+            boardName: null,
+            boardUrl: null,
+            columnValue: null,
+            laneValue: null,
+            // setColumn: null,
+            // setLane: null,
+    };
+    let optionsPromise: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
 
-    private _getWorkItemFormService() {
-        return WorkItemFormService.getService();
-    }
 
-    private _getAllowedFieldValues(fieldName: string): IPromise<string[]> {
-        var defer = Q.defer<any>();
-        //get allowed value for BoardColumn, BoardColumnDone, and BoardLane
-        this._getWorkItemFormService().then(function (service) {
-            // Get the current values for board info
-            service.getAllowedFieldValues(fieldName).then(
-                function (value) {
-                    defer.resolve(value);
-                })
-        });
-        return defer.promise;
-    }
-
-    private _getFieldValues(fields: string[]): any {
-        var defer = Q.defer<any>();
-        this._getWorkItemFormService().then(function (service) {
-            // Get the current values for board info
-            service.getFieldValues(fields).then(
-                function (value) {
-                    defer.resolve(value);
-                });
-        });
-        return defer.promise;
-    }
-
-    private _setFieldValue(fieldName: string, selected: string): IPromise<boolean> {
-        //put to changedfields
-        var defer = Q.defer<boolean>();
-        this._getWorkItemFormService().then(function (service) {
-            service.setFieldValue(fieldName, selected).then((value) => {
-                defer.resolve(value);
-            });
-        });
-        return defer.promise;
-    }
-
-    public SetBoardColumn(value: string): IPromise<boolean> {
-        var defer = Q.defer<boolean>();
-        this._setFieldValue("System.BoardColumn", value).then((value) => {
-            defer.resolve(value);
-
+    let resolveIfDone = () => {
+        for (var key in this.boardOptions) {
+            if (key === null) {
+                return;
+            }
         }
-
-        );
-        return defer.promise;
+        this.optionsPromise.resolve(this.boardOptions);
     }
 
-    public SetBoardLane(value: string): IPromise<boolean> {
-        var defer = Q.defer<boolean>();
-        this._setFieldValue("System.BoardLane", value).then((value) => {
-            defer.resolve(value);
-        });
-        return defer.promise;
-    }
 
-    //To-Do: make field value cache inside to make one call in the end.
-    public getBoardColumn(): IPromise<string> {
-        var defer = Q.defer<any>();
-        this._getFieldValues(["System.BoardColumn"]).then(function (value) {
-            defer.resolve(value["System.BoardColumn"]);
-        });
-        return defer.promise;
-    }
+    WorkItemFormService.getService().then((service) => {
+        // Get the current values for board info
+        service.getFieldValues(["System.BoardColumn","System.BoardLane"]).then( (values) => {
 
-    public getBoardLane(): IPromise<string> {
-        var defer = Q.defer<any>();
-        this._getFieldValues(["System.BoardLane"]).then(function (value) {
-            defer.resolve(value["System.BoardLane"]);
-        });
-        return defer.promise;
-    }
-
-    public getBoardColumnAllowedValue(): IPromise<string[]> {
-        var defer = Q.defer<any>();
-        this._getAllowedFieldValues("System.BoardColumn").then(function (value) {
-            defer.resolve(value);
-        });
-        return defer.promise;
-    }
-
-    public getBoardLaneAllowedValue(): IPromise<string[]> {
-        var defer = Q.defer<any>();
-        this._getAllowedFieldValues("System.BoardLane").then(function (value) {
-            defer.resolve(value);
-        });
-        return defer.promise;
-    }
+            this.boardOptions.columnValue = values["System.BoardColumn"];
+            this.boardOptions.laneValue = values["System.BoardLane"];
+            resolveIfDone();
+        })
+    });
 }

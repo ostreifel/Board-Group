@@ -20,8 +20,6 @@ let options: IBoardControlOptions = {
         defer.resolve();
         return defer.promise;
     },
-    boardName: "Board name",
-    boardLink: "Board link",
 };
 
 
