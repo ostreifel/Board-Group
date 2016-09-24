@@ -1,25 +1,31 @@
 import {BoardControl, IBoardControlOptions} from "./BoardControl";
 import Controls = require("VSS/Controls");
 import Q = require("q");
+import {WITFormSvcHelper} from "./WITFormSvcHelper";
+
+let witFormHelper = new WITFormSvcHelper();
 
 let options: IBoardControlOptions = {
-    columnValue: "Sample column value",
-    allowedColumnValues: ["Sample column value", "Sample column value2"],
+    columnValue: witFormHelper.getBoardColumn(),
+    allowedColumnValues: witFormHelper.getBoardColumnAllowedValue(),
     setColumn: (columnValue: string)=>{
         var defer = Q.defer<void>();
         defer.resolve();
         return defer.promise;
     },
-    laneValue: "Sample lane value",
-    allowedLaneValues: ["Sample lane value", "Sample lane value2"],
+    laneValue: witFormHelper.getBoardLane(),
+    allowedLaneValues: witFormHelper.getBoardLaneAllowedValue(),
     setLane: (laneValue: string)=>{
         var defer = Q.defer<void>();
         defer.resolve();
         return defer.promise;
     },
     boardName: "Board name",
-    boardLink: "Board link"
+    boardLink: "Board link",
 };
+
+
+
 Controls.Enhancement.registerEnhancement(BoardControl, '.board-control', options);
 
 // Register context menu action provider

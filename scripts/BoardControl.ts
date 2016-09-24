@@ -1,14 +1,15 @@
 import Controls = require("VSS/Controls");
+import {WITFormSvcHelper} from "./WITFormSvcHelper";
 import Combos = require("VSS/Controls/Combos");
 
 import RestClient = require("TFS/Work/RestClient");
 
 export interface IBoardControlOptions {
-    columnValue: string;
-    allowedColumnValues: string[];
+    columnValue: IPromise<string>;
+    allowedColumnValues: IPromise<string[]>;
     setColumn: (columValue: string)=>IPromise<void>;
-    laneValue: string;
-    allowedLaneValues: string[];
+    laneValue:  IPromise<string>;
+    allowedLaneValues:  IPromise<string[]>;
     setLane: (laneValue: string)=>IPromise<void>;
     boardName: string;
     boardLink: string;
@@ -46,11 +47,11 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
 
         let columnOptions: Combos.IComboOptions = {
             type: 'list',
-            source: this._options.allowedColumnValues,
-            value: this._options.columnValue,
+            source: allowedColumnValues,
+            value: columnValue,
             change: () => {
                 let columnValue = this.lane.getInputText();
-                if (this._options.allowedColumnValues.indexOf(columnValue) === -1) {
+                if (allowedColumnValues.indexOf(columnValue) === -1) {
                     return;
                 } 
                 console.log(`Setting the column value to ${columnValue}`)
@@ -64,11 +65,11 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
         };
         let laneOptions: Combos.IComboOptions = {
             type: 'list',
-            source: this._options.allowedLaneValues,
-            value: this._options.laneValue,
+            source: allowedLaneValues,
+            value: laneValue,
             change: () => {
                 let laneValue = this.lane.getInputText();
-                if (this._options.allowedLaneValues.indexOf(laneValue) === -1) {
+                if (allowedLaneValues.indexOf(laneValue) === -1) {
                     return;
                 } 
                 console.log(`Setting the lane value to ${laneValue}`);
