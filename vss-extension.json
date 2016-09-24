@@ -1,10 +1,10 @@
 {
     "manifestVersion": 1,
-    "id": "vsts-extension-ts-seed-simple",
-    "version": "0.1.48",
-    "name": "vsts-extension-ts-seed-simple",
+    "id": "board-group",
+    "version": "0.1.2",
+    "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
-    "description": "Describe your extension.",
+    "description": "Places a group on the work item form showing the current board.",
     "publisher": "ottostreifel",
     "icons": {
         "default": "img/logo.png"

@@ -1,3 +1,3 @@
-# vsts-extension-ts-seed-simple #
+# Board Control #
 
-Describe your extension here. This description will be shown in the marketplace. You can use *Markdown*.
+Places a group on the work item form to display the board that it is on.
