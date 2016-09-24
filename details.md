@@ -1,3 +1,3 @@
 # Board Control #
 
-Places a group on the work item form to display the board that it is on.
+If the current work item has an associated board show the board column, lane and hyperlinked board name.
