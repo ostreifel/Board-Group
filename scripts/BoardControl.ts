@@ -1,6 +1,8 @@
 import Controls = require("VSS/Controls");
 import Combos = require("VSS/Controls/Combos");
 
+import RestClient = require("TFS/Work/RestClient");
+
 export interface IBoardControlOptions {
     columnValue: string;
     allowedColumnValues: string[];
@@ -10,12 +12,38 @@ export interface IBoardControlOptions {
     setLane: (laneValue: string)=>IPromise<void>;
     boardName: string;
     boardLink: string;
-
 }
+
 export class BoardControl extends Controls.Control<IBoardControlOptions> {
     private column: Combos.Combo;
     private lane: Combos.Combo;
     public initialize() {
+
+
+        var teamContext = {
+            project : VSS.getWebContext().project.name,
+            projectId : VSS.getWebContext().project.id,
+            team : VSS.getWebContext().team.name,
+            teamId : VSS.getWebContext().team.id
+        };
+        var boardName = "";
+        var client = RestClient.getClient();
+        client.getBoards(teamContext).then(
+            function(boards) {
+                for(var i=0;i<boards.length;i++) {
+                    var b = boards[i];
+                    console.log(b.url, b.name, b.id);
+                    boardName = b.name;
+                }
+            }   
+        );
+        var accountName = VSS.getWebContext().account.name;
+        var teamName = VSS.getWebContext().team.name;
+        
+        var boardUrl = "http://" + accountName + ".visualstudio.com/" + teamName + "/_backlogs/board/" + boardName;
+        console.log(boardUrl);
+
+
         let columnOptions: Combos.IComboOptions = {
             type: 'list',
             source: this._options.allowedColumnValues,
@@ -52,7 +80,11 @@ export class BoardControl extends Controls.Control<IBoardControlOptions> {
         };
 
         let boardLink = $('<a/>').text(this._options.boardName)
-            .attr("href", this._options.boardLink); 
+            .attr({
+                href: boardUrl, 
+                target:"_parent"
+            });
+
         this._element.append(boardLink);
         let boardFields = $('<div/>');
         boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
