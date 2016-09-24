@@ -62,7 +62,7 @@ export function getBoardOptions() {
             
             var accountName = VSS.getWebContext().account.name;
             var teamName = VSS.getWebContext().team.name;
-            boardOptions.boardUrl = `http://${window.location.host}/${teamName}/_backlogs/board/${this.boardOptions.boardName}`;
+            boardOptions.boardUrl = `http://${window.location.host}/${teamName}/_backlogs/board/${boardOptions.boardName}`;
             resolveIfDone();
         }, rejectOnError);
     return optionsDeferred.promise;

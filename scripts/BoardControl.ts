@@ -1,5 +1,4 @@
 import Controls = require("VSS/Controls");
-import {WITFormSvcHelper} from "./WITFormSvcHelper";
 import Combos = require("VSS/Controls/Combos");
 
 import RestClient = require("TFS/Work/RestClient");
