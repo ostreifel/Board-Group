@@ -1,36 +1,49 @@
-import Controls = require("VSS/Controls");
-import Combos = require("VSS/Controls/Combos");
-
-import RestClient = require("TFS/Work/RestClient");
+import {Control, BaseControl} from "VSS/Controls";
+import {Combo, IComboOptions} from "VSS/Controls/Combos";
 
 export interface IBoardControlOptions {
     columnValue: string;
     allowedColumnValues: string[];
-    // setColumn: (columValue: string)=>IPromise<void>;
+    setColumn: (columValue: string)=>IPromise<boolean>;
     laneValue:  string;
     allowedLaneValues:  string[];
-    // setLane: (laneValue: string)=>IPromise<void>;
+    setLane: (laneValue: string)=>IPromise<boolean>;
     boardName: string;
     boardUrl: string;
 }
 
-export class BoardControl extends Controls.Control<IPromise<IBoardControlOptions>> {
-    private column: Combos.Combo;
-    private lane: Combos.Combo;
+export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
+    private column: Combo;
+    private lane: Combo;
     public initialize() {
         this._options.then((options) => {this.initializeInternal(options)})
 
     }
     private initializeInternal(options: IBoardControlOptions) {
-        let columnOptions: Combos.IComboOptions = {
+        let columnOptions: IComboOptions = {
             value: options.columnValue,
             type: 'list',
-            source: options.allowedColumnValues
+            allowEdit: false
+            // source: options.allowedColumnValues,
+            // change: function() {
+            //     var box: Combo = this;
+            //     if (box.getSelectedIndex() > -1) {
+            //         options.setColumn(box.getInputText());
+            //     }
+            // }
         };
-        let laneOptions: Combos.IComboOptions = {
+        let laneOptions: IComboOptions = {
             value: options.laneValue,
-            type: 'list',
-            source: options.allowedLaneValues
+            mode: 'string',
+            allowEdit: false
+            // type: 'list',
+            // source: options.allowedLaneValues,
+            // change: function() {
+            //     var box: Combo = this;
+            //     if (box.getSelectedIndex() > -1) {
+            //         options.setLane(box.getInputText());
+            //     }
+            // }
         };
 
         if (!options.boardName) {
@@ -47,11 +60,11 @@ export class BoardControl extends Controls.Control<IPromise<IBoardControlOptions
         let boardFields = $('<div/>');
         if (options.columnValue) {
             boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
-            this.column = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, columnOptions);
+            this.column = <Combo>BaseControl.createIn(Combo, boardFields, columnOptions);
         }
         if (options.laneValue) {
             boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
-            this.lane = <Combos.Combo>Controls.BaseControl.createIn(Combos.Combo, boardFields, laneOptions);
+            this.lane = <Combo>BaseControl.createIn(Combo, boardFields, laneOptions);
         }
         this._element.append(boardFields);
     }

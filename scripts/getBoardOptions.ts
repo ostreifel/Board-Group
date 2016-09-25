@@ -1,7 +1,7 @@
 import {WorkItemFormService} from "TFS/WorkItemTracking/Services";
 import {IBoardControlOptions} from "./BoardControl";
 import Q = require("q");
-import RestClient = require("TFS/Work/RestClient");
+import {getClient} from "TFS/Work/RestClient";
 import {TeamContext} from "TFS/Core/Contracts";
 
 export function getBoardOptions() {
@@ -12,20 +12,11 @@ export function getBoardOptions() {
             boardUrl: null,
             columnValue: null,
             laneValue: null,
-            // setColumn: null,
-            // setLane: null,
+            setColumn: null,
+            setLane: null,
     };
     let optionsDeferred: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
 
-
-    let resolveIfDone = () => {
-        for (var key in boardOptions) {
-            if (boardOptions[key] === null) {
-                return;
-            }
-        }
-        optionsDeferred.resolve(boardOptions);
-    }
     let rejectOnError = (error) => {optionsDeferred.reject(error)};
 
 
@@ -37,7 +28,7 @@ export function getBoardOptions() {
             teamId : VSS.getWebContext().team.id
         };
 
-        let client = RestClient.getClient();
+        let client = getClient();
         client.getBoards(teamContext).then(
             (boards) => {
                 if (boards.length === 0) {
@@ -56,7 +47,7 @@ export function getBoardOptions() {
 
                             boardOptions.allowedColumnValues = board.columns.map((column) => column.name);
                             boardOptions.allowedLaneValues = board.rows.map((row) => row.name || '(Default Lane)');
-                            resolveIfDone();
+                            optionsDeferred.resolve(boardOptions);
                         }
                     }, rejectOnError);
                 }
@@ -64,12 +55,17 @@ export function getBoardOptions() {
     }
 
     WorkItemFormService.getService().then((service) => {
+        boardOptions.setColumn = (columnValue: string) =>
+            service.setFieldValue("System.BoardColumn", columnValue);
+        boardOptions.setLane = (laneValue: string) =>
+            service.setFieldValue("System.BoardLane", laneValue);
+        
+            
         // Get the current values for board info
         service.getFieldValues(["System.BoardColumn","System.BoardLane"]).then( (values) => {
 
             boardOptions.columnValue = <string>values["System.BoardColumn"];
             boardOptions.laneValue = <string>values["System.BoardLane"];
-            resolveIfDone();
         }, rejectOnError)
 
         service.getFields().then((fields) => {
@@ -81,7 +77,6 @@ export function getBoardOptions() {
                 }
             }
             boardOptions.boardName = boardOptions.boardUrl = "";
-            resolveIfDone();
         }, rejectOnError)
     }, rejectOnError);
 
