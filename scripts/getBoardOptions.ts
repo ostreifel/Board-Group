@@ -65,13 +65,20 @@ export function getBoardOptions() {
         service.getFieldValues(["System.BoardColumn","System.BoardLane"]).then( (values) => {
 
             boardOptions.columnValue = <string>values["System.BoardColumn"];
-            boardOptions.laneValue = <string>values["System.BoardLane"];
+            boardOptions.laneValue = <string>values["System.BoardLane"] || "(Default Lane)";
         }, rejectOnError)
 
         service.getFields().then((fields) => {
             for (let i in fields) {
                 var field = fields[i];
                 if (field.referenceName && field.referenceName.match(/_Kanban\.Column$/)) {
+                    
+                    boardOptions.setColumn = (columnValue: string) =>
+                        service.setFieldValue(field.referenceName, columnValue);
+                    let lane = field.referenceName.replace('Column', 'Lane');
+                    boardOptions.setLane = (laneValue: string) =>
+                        service.setFieldValue(lane, laneValue);
+
                     getBoardUrl(field.referenceName);
                     return;
                 }

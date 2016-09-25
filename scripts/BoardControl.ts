@@ -22,28 +22,27 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
     private initializeInternal(options: IBoardControlOptions) {
         let columnOptions: IComboOptions = {
             value: options.columnValue,
-            type: 'string',
-            allowEdit: false
-            // source: options.allowedColumnValues,
-            // change: function() {
-            //     var box: Combo = this;
-            //     if (box.getSelectedIndex() > -1) {
-            //         options.setColumn(box.getInputText());
-            //     }
-            // }
+            // mode: 'string',
+            // allowEdit: false
+            source: options.allowedColumnValues,
+            change: function() {
+                var box: Combo = this;
+                if (box.getSelectedIndex() > -1) {
+                    options.setColumn(box.getInputText());
+                }
+            }
         };
         let laneOptions: IComboOptions = {
             value: options.laneValue,
-            mode: 'string',
-            allowEdit: false
-            // type: 'list',
-            // source: options.allowedLaneValues,
-            // change: function() {
-            //     var box: Combo = this;
-            //     if (box.getSelectedIndex() > -1) {
-            //         options.setLane(box.getInputText());
-            //     }
-            // }
+            // mode: 'string',
+            // allowEdit: false
+            source: options.allowedLaneValues,
+            change: function() {
+                var box: Combo = this;
+                if (box.getSelectedIndex() > -1) {
+                    options.setLane(box.getInputText());
+                }
+            }
         };
 
         if (!options.boardName) {
@@ -62,7 +61,7 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
             boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
             this.column = <Combo>BaseControl.createIn(Combo, boardFields, columnOptions);
         }
-        if (options.laneValue) {
+        if (options.laneValue && options.allowedLaneValues.length > 1) {
             boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
             this.lane = <Combo>BaseControl.createIn(Combo, boardFields, laneOptions);
         }
