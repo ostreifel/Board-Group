@@ -22,7 +22,7 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
     private initializeInternal(options: IBoardControlOptions) {
         let columnOptions: IComboOptions = {
             value: options.columnValue,
-            type: 'list',
+            type: 'string',
             allowEdit: false
             // source: options.allowedColumnValues,
             // change: function() {
