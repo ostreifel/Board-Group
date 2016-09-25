@@ -67,5 +67,13 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
         }
         this._element.append(boardFields);
     }
+    public update(column: string, lane: string) {
+        if (this.column) {
+            this.column.setInputText(column);
+        }
+        if (this.lane) {
+            this.lane.setInputText(lane);
+        }
+    }
 
 }

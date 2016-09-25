@@ -1,3 +1,3 @@
-If the current work item has an associated board show the board column, lane and hyperlinked board name.
+If the current work item as an associated board show editable information related to that board.
 
 ![kanban group image](img/group.png)
