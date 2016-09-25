@@ -5,10 +5,10 @@ import RestClient = require("TFS/Work/RestClient");
 
 export interface IBoardControlOptions {
     columnValue: string;
-    // allowedColumnValues: string[];
+    allowedColumnValues: string[];
     // setColumn: (columValue: string)=>IPromise<void>;
     laneValue:  string;
-    // allowedLaneValues:  string[];
+    allowedLaneValues:  string[];
     // setLane: (laneValue: string)=>IPromise<void>;
     boardName: string;
     boardUrl: string;
@@ -24,13 +24,13 @@ export class BoardControl extends Controls.Control<IPromise<IBoardControlOptions
     private initializeInternal(options: IBoardControlOptions) {
         let columnOptions: Combos.IComboOptions = {
             value: options.columnValue,
-            mode: 'text',
-            enabled: false
+            type: 'list',
+            source: options.allowedColumnValues
         };
         let laneOptions: Combos.IComboOptions = {
             value: options.laneValue,
-            mode: 'text',
-            enabled: false
+            type: 'list',
+            source: options.allowedLaneValues
         };
 
         if (!options.boardName) {

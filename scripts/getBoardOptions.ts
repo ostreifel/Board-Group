@@ -6,8 +6,8 @@ import {TeamContext} from "TFS/Core/Contracts";
 
 export function getBoardOptions() {
     let boardOptions: IBoardControlOptions= {
-            // allowedColumnValues: null,
-            // allowedLaneValues: null,
+            allowedColumnValues: null,
+            allowedLaneValues: null,
             boardName: null,
             boardUrl: null,
             columnValue: null,
@@ -44,15 +44,18 @@ export function getBoardOptions() {
                     rejectOnError("There were no boards");
                     return;
                 }
-                //TODO optimize this, dont go through every board. This will require an api.
                 for (var i in boards) {
                     client.getBoard(teamContext, boards[i].id).then((board) => {
                         if (board.fields.columnField.referenceName === referenceName) {
                             boardOptions.boardName = board.name
+
                             var accountName = VSS.getWebContext().account.name;
                             var projectName = VSS.getWebContext().project.name;
                             var uri = VSS.getWebContext().host.uri;
                             boardOptions.boardUrl = `${uri}${projectName}/_backlogs/board/${boardOptions.boardName}`;
+
+                            boardOptions.allowedColumnValues = board.columns.map((column) => column.name);
+                            boardOptions.allowedLaneValues = board.rows.map((row) => row.name || '(Default Lane)');
                             resolveIfDone();
                         }
                     }, rejectOnError);
