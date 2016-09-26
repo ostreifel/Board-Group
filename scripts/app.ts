@@ -14,10 +14,10 @@ let refresh = () => {
 refresh();
 // Register context menu action provider
 const publisherId = VSS.getExtensionContext().publisherId;
-VSS.register(`${ publisherId }.board-group.board-work-item-form-group`, {
+const extensionId = VSS.getExtensionContext().extensionId;
+VSS.register(`${publisherId}.${extensionId}.board-work-item-form-group`, {
     onFieldChanged: (fieldChangedArgs: IWorkItemFieldChangedArgs) => {
         let changes = fieldChangedArgs.changedFields;
-        console.log(changes);
         for (var referenceName in changes) {
             if (referenceName.match(/_Kanban.Column/)) {
                 let column = changes[referenceName];
