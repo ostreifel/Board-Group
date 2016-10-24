@@ -13,17 +13,19 @@ export interface IBoardControlOptions {
 }
 
 export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
+    private columnDiv: JQuery;
     private column: Combo;
+    private laneDiv: JQuery;
     private lane: Combo;
     public initialize() {
+        this._element.append($('<p/>').text('No board found'));
+        VSS.resize();
         this._options.then((options) => {this.initializeInternal(options)})
 
     }
     private initializeInternal(options: IBoardControlOptions) {
         let columnOptions: IComboOptions = {
             value: options.columnValue,
-            // mode: 'string',
-            // allowEdit: false
             source: options.allowedColumnValues,
             change: function() {
                 var box: Combo = this;
@@ -34,8 +36,6 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
         };
         let laneOptions: IComboOptions = {
             value: options.laneValue,
-            // mode: 'string',
-            // allowEdit: false
             source: options.allowedLaneValues,
             change: function() {
                 var box: Combo = this;
@@ -46,9 +46,9 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
         };
 
         if (!options.boardName) {
-            this._element.append($('<p/>').text('No board found'));
             return;
         }
+        this._element.html('')
         let boardLink = $('<a/>').text(options.boardName)
             .attr({
                 href: options.boardUrl, 
@@ -66,6 +66,7 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
             this.lane = <Combo>BaseControl.createIn(Combo, boardFields, laneOptions);
         }
         this._element.append(boardFields);
+        VSS.resize();
     }
     public update(column: string, lane: string) {
         if (this.column) {
