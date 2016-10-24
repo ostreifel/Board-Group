@@ -18,9 +18,9 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
     private laneDiv: JQuery;
     private lane: Combo;
     public initialize() {
-        this._element.append($('<p/>').text('No board found'));
+        this._element.append($('<div/>').text('Looking for associated board.'));
         VSS.resize();
-        this._options.then((options) => {this.initializeInternal(options)})
+        this._options.then((options) => {this.initializeInternal(options)}, (error) => {this._updateWithError(error)});
 
     }
     private initializeInternal(options: IBoardControlOptions) {
@@ -45,9 +45,6 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
             }
         };
 
-        if (!options.boardName) {
-            return;
-        }
         this._element.html('')
         let boardLink = $('<a/>').text(options.boardName)
             .attr({
@@ -75,6 +72,10 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
         if (this.lane) {
             this.lane.setInputText(lane);
         }
+    }
+    private _updateWithError(error) {
+        this._element.html('');
+        this._element.append($('<div>').text(error));
     }
 
 }

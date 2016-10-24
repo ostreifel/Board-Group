@@ -17,7 +17,9 @@ export function getBoardOptions() {
     };
     let optionsDeferred: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
 
-    let rejectOnError = (error) => {optionsDeferred.reject(error)};
+    let rejectOnError = (error) => {
+        optionsDeferred.reject(error)
+    };
 
 
     let getBoardUrl = (referenceName: string) => {
@@ -83,7 +85,7 @@ export function getBoardOptions() {
                     return;
                 }
             }
-            boardOptions.boardName = boardOptions.boardUrl = "";
+            rejectOnError('No board is associated with the current work item');
         }, rejectOnError)
     }, rejectOnError);
 
