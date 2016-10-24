@@ -85,7 +85,7 @@ export function getBoardOptions() {
                     return;
                 }
             }
-            rejectOnError('No board is associated with the current work item');
+            rejectOnError('No associated board');
         }, rejectOnError)
     }, rejectOnError);
 
