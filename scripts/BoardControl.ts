@@ -24,21 +24,21 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
 
     }
     private initializeInternal(options: IBoardControlOptions) {
-        let columnOptions: IComboOptions = {
+        const columnOptions: IComboOptions = {
             value: options.columnValue,
             source: options.allowedColumnValues,
             change: function() {
-                var box: Combo = this;
+                const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
                     options.setColumn(box.getInputText());
                 }
             }
         };
-        let laneOptions: IComboOptions = {
+        const laneOptions: IComboOptions = {
             value: options.laneValue,
             source: options.allowedLaneValues,
             change: function() {
-                var box: Combo = this;
+                const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
                     options.setLane(box.getInputText());
                 }
@@ -46,14 +46,14 @@ export class BoardControl extends Control<IPromise<IBoardControlOptions>> {
         };
 
         this._element.html('')
-        let boardLink = $('<a/>').text(options.boardName)
+        const boardLink = $('<a/>').text(options.boardName)
             .attr({
                 href: options.boardUrl, 
                 target:"_parent"
             });
 
         this._element.append(boardLink).append($('<br><br>'));
-        let boardFields = $('<div/>');
+        const boardFields = $('<div/>');
         if (options.columnValue) {
             boardFields.append($('<label/>').addClass('workitemcontrol-label').text('Board Column'));
             this.column = <Combo>BaseControl.createIn(Combo, boardFields, columnOptions);

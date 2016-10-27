@@ -5,7 +5,7 @@ import {getClient} from "TFS/Work/RestClient";
 import {TeamContext} from "TFS/Core/Contracts";
 
 export function getBoardOptions() {
-    let boardOptions: IBoardControlOptions= {
+    const boardOptions: IBoardControlOptions= {
             allowedColumnValues: null,
             allowedLaneValues: null,
             boardName: null,
@@ -15,14 +15,13 @@ export function getBoardOptions() {
             setColumn: null,
             setLane: null,
     };
-    let optionsDeferred: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
+    const optionsDeferred: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
 
-    let rejectOnError = (error) => {
+    const rejectOnError = (error: TfsError | string) => {
         optionsDeferred.reject(error)
     };
 
-
-    let getBoardUrl = (referenceName: string) => {
+    const getBoardUrl = (referenceName: string) => {
         let teamContext: TeamContext = {
             project : VSS.getWebContext().project.name,
             projectId : VSS.getWebContext().project.id,
@@ -30,22 +29,22 @@ export function getBoardOptions() {
             teamId : VSS.getWebContext().team.id
         };
 
-        let client = getClient();
+        const client = getClient();
         client.getBoards(teamContext).then(
             (boards) => {
                 if (boards.length === 0) {
                     rejectOnError("There were no boards");
                     return;
                 }
-                for (var i in boards) {
+                for (let i in boards) {
                     client.getBoard(teamContext, boards[i].id).then((board) => {
                         if (board.fields.columnField.referenceName === referenceName) {
                             boardOptions.boardName = board.name
 
-                            var accountName = VSS.getWebContext().account.name;
-                            var projectName = VSS.getWebContext().project.name;
-                            var uri = VSS.getWebContext().host.uri;
-                            boardOptions.boardUrl = `${uri}${projectName}/_backlogs/board/${boardOptions.boardName}`;
+                            const accountName = VSS.getWebContext().account.name;
+                            const projectName = VSS.getWebContext().project.name;
+                            const uri = VSS.getWebContext().host.uri;
+                            boardOptions.boardUrl = `${uri}${projectName}/${teamContext.team}/_backlogs/board/${boardOptions.boardName}`;
 
                             boardOptions.allowedColumnValues = board.columns.map((column) => column.name);
                             boardOptions.allowedLaneValues = board.rows.map((row) => row.name || '(Default Lane)');
@@ -57,12 +56,6 @@ export function getBoardOptions() {
     }
 
     WorkItemFormService.getService().then((service) => {
-        boardOptions.setColumn = (columnValue: string) =>
-            service.setFieldValue("System.BoardColumn", columnValue);
-        boardOptions.setLane = (laneValue: string) =>
-            service.setFieldValue("System.BoardLane", laneValue);
-        
-            
         // Get the current values for board info
         service.getFieldValues(["System.BoardColumn","System.BoardLane"]).then( (values) => {
 
@@ -72,12 +65,12 @@ export function getBoardOptions() {
 
         service.getFields().then((fields) => {
             for (let i in fields) {
-                var field = fields[i];
+                const field = fields[i];
                 if (field.referenceName && field.referenceName.match(/_Kanban\.Column$/)) {
                     
                     boardOptions.setColumn = (columnValue: string) =>
                         service.setFieldValue(field.referenceName, columnValue);
-                    let lane = field.referenceName.replace('Column', 'Lane');
+                    const lane = field.referenceName.replace('Column', 'Lane');
                     boardOptions.setLane = (laneValue: string) =>
                         service.setFieldValue(lane, laneValue);
 
@@ -85,7 +78,7 @@ export function getBoardOptions() {
                     return;
                 }
             }
-            rejectOnError('No associated board');
+            rejectOnError('No associated board for current team');
         }, rejectOnError)
     }, rejectOnError);
 
