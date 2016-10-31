@@ -1,4 +1,4 @@
-import {WorkItemFormService} from "TFS/WorkItemTracking/Services";
+import {WorkItemFormService, IWorkItemFormService} from "TFS/WorkItemTracking/Services";
 import {IBoardControlOptions} from "./BoardControl";
 import Q = require("q");
 import {getClient} from "TFS/Work/RestClient";
@@ -21,7 +21,7 @@ export function getBoardOptions() {
         optionsDeferred.reject(error)
     };
 
-    const getBoardUrl = (referenceName: string) => {
+    const getBoardUrl = (service: IWorkItemFormService, referenceNames: string[]) => {
         let teamContext: TeamContext = {
             project : VSS.getWebContext().project.name,
             projectId : VSS.getWebContext().project.id,
@@ -33,12 +33,17 @@ export function getBoardOptions() {
         client.getBoards(teamContext).then(
             (boards) => {
                 if (boards.length === 0) {
-                    rejectOnError("There were no boards");
+                    rejectOnError("There are no boards");
                     return;
                 }
-                for (let i in boards) {
-                    client.getBoard(teamContext, boards[i].id).then((board) => {
-                        if (board.fields.columnField.referenceName === referenceName) {
+                for (let boardReference of boards) {
+                    client.getBoard(teamContext, boardReference.id).then((board) => {
+                        if (referenceNames.indexOf(board.fields.columnField.referenceName) >= 0) {
+                            
+                            boardOptions.setColumn = (columnValue: string) =>
+                                service.setFieldValue(board.fields.columnField.referenceName, columnValue);
+                            boardOptions.setLane = (laneValue: string) =>
+                                service.setFieldValue(board.fields.rowField.referenceName, laneValue);
                             boardOptions.boardName = board.name
 
                             const accountName = VSS.getWebContext().account.name;
@@ -64,21 +69,17 @@ export function getBoardOptions() {
         }, rejectOnError)
 
         service.getFields().then((fields) => {
-            for (let i in fields) {
-                const field = fields[i];
+            const columnFields: string[] = [];
+            for (let field of fields) {
                 if (field.referenceName && field.referenceName.match(/_Kanban\.Column$/)) {
-                    
-                    boardOptions.setColumn = (columnValue: string) =>
-                        service.setFieldValue(field.referenceName, columnValue);
-                    const lane = field.referenceName.replace('Column', 'Lane');
-                    boardOptions.setLane = (laneValue: string) =>
-                        service.setFieldValue(lane, laneValue);
-
-                    getBoardUrl(field.referenceName);
-                    return;
+                    columnFields.push(field.referenceName);
                 }
             }
-            rejectOnError('No associated board for current team');
+            if (columnFields.length > 0) {
+                getBoardUrl(service, columnFields);
+            } else {
+                rejectOnError('No associated board for current team');
+            }
         }, rejectOnError)
     }, rejectOnError);
 
