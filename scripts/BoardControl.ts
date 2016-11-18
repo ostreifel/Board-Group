@@ -35,7 +35,7 @@ export class BoardControl extends Control<{}> {
     private laneInput: Combo;
     private doneInput: Combo;
     public initialize() {
-        this._element.append($('<div/>').text('Looking for associated board.'));
+        this._element.append($('<div/>').text('Looking for associated board...'));
         VSS.resize();
         this.findAllBoards();
 
@@ -95,7 +95,7 @@ export class BoardControl extends Control<{}> {
         this.board = board;
         this.columnValue = fields[board.fields.columnField.referenceName] || null;
         this.rowValue = fields[board.fields.rowField.referenceName] || null;
-        this.doneValue = fields[board.fields.doneField.referenceName] || null;
+        this.doneValue = fields[board.fields.doneField.referenceName] || false;
         this.workItemType = fields["System.WorkItemType"];
 
         const boardControl = this;
@@ -106,6 +106,7 @@ export class BoardControl extends Control<{}> {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
                     boardControl.updateState(box.getInputText());
+                    boardControl.updateButtonInputs();
                 }
             }
         };
@@ -147,9 +148,16 @@ export class BoardControl extends Control<{}> {
         if (this.board.rows.length > 1 
                 && column.columnType !== BoardColumnType.Incoming
                 && column.columnType !== BoardColumnType.Outgoing) {
+            const boardControl = this;
             const laneOptions: IComboOptions = {
                 value: this.rowValue || '(Default Lane)',
-                source: this.board.rows.map((r) => r.name || '(Default Lane)')
+                source: this.board.rows.map((r) => r.name || '(Default Lane)'),
+                change: function () {
+                const box: Combo = this;
+                if (box.getSelectedIndex() > -1) {
+                    boardControl.updateButtonInputs();
+                }
+            }
             };
             laneElem.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
@@ -159,9 +167,16 @@ export class BoardControl extends Control<{}> {
     }
 
     private updateDoneInput() {
+        const boardControl = this;
         const doneOptions: IComboOptions = {
             value: this.doneValue ? 'True' : 'False',
-            source: ['True', 'False']
+            source: ['True', 'False'],
+            change: function () {
+                const box: Combo = this;
+                if (box.getSelectedIndex() > -1) {
+                    boardControl.updateButtonInputs();
+                }
+            }
         };
         const columnValue = this.getColumnInputValue();
         const isSplit = this.board.columns.filter((c) => c.name === columnValue)[0].isSplit;
@@ -185,9 +200,13 @@ export class BoardControl extends Control<{}> {
 
         WorkItemFormService.getService().then((service) => {
             service.isDirty().then((isDirty) => {
-                const reset = $("<button>Reset</button>").click(() => this.onReset());
-                const save = $("<button>Save</button>").click(() => this.onSaved());
-                buttonElem.append(reset, save);
+                if (!isDirty) {
+                    buttonElem.html('');
+                    const reset = $("<button>Reset</button>").click(() => this.onReset());
+                    const save = $("<button>Save</button>").click(() => this.onSaved());
+                    buttonElem.append(reset, save);
+                    VSS.resize();
+                }
             })
         });
         
@@ -220,9 +239,9 @@ export class BoardControl extends Control<{}> {
         return this.columnInput.getInputText();
     }
 
-    private getDoneInputValue(): boolean | null {
+    private getDoneInputValue(): boolean {
         if (!this.doneInput || this.doneInput.getSelectedIndex() < 0) {
-            return null;
+            return false;
         }
         return this.doneInput.getInputText() === "True";
     }
@@ -242,23 +261,26 @@ export class BoardControl extends Control<{}> {
     }
 
     public onFieldChanged(fieldChangedArgs: IWorkItemFieldChangedArgs) {
+        if (!this.board) {
+            return;
+        }
         const state = fieldChangedArgs.changedFields["System.State"];
         if (!state || !this.board) {
-            return;
+            this.updateButtonInputs();
         }
         const column = this.board.columns.filter((c) => c.stateMappings && c.stateMappings[this.workItemType] === state)[0];
         if (column && this.columnInput && column.name !== this.getColumnInputValue()) {
             this.columnInput.setInputText(column.name);
             this.updateLaneInput();
             this.updateDoneInput();
-            this.updateButtonInputs();
         }
+        this.updateButtonInputs();
     }
 
     public isDirty(): boolean {
         return (this.rowValue !== this.getLaneInputValue()
             || this.columnValue !== this.getColumnInputValue()
-            || this.doneValue !== this.getDoneInputValue()
+            || (this.doneValue) !== this.getDoneInputValue()
         );
     }
 
