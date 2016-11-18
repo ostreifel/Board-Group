@@ -4,7 +4,7 @@ import { WorkItemFormService, IWorkItemFormService } from "TFS/WorkItemTracking/
 import { IBoardControlOptions } from "./BoardControl";
 import Q = require("q");
 import { getClient as getWorkClient } from "TFS/Work/RestClient";
-import { BoardReference, Board } from "TFS/Work/Contracts";
+import { BoardReference, Board, BoardColumnType } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TeamContext } from "TFS/Core/Contracts";
 import { IWorkItemChangedArgs, IWorkItemFieldChangedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
@@ -34,7 +34,6 @@ export class BoardControl extends Control<{}> {
     private columnInput: Combo;
     private laneInput: Combo;
     private doneInput: Combo;
-    private doneLabel: JQuery;
     public initialize() {
         this._element.append($('<div/>').text('Looking for associated board.'));
         VSS.resize();
@@ -110,10 +109,6 @@ export class BoardControl extends Control<{}> {
                 }
             }
         };
-        const laneOptions: IComboOptions = {
-            value: this.rowValue,
-            source: board.rows.map((r) => r.name)
-        };
 
         const accountName = VSS.getWebContext().account.name;
         const projectName = VSS.getWebContext().project.name;
@@ -135,14 +130,32 @@ export class BoardControl extends Control<{}> {
         } else {
             this.columnInput = null;
         }
-        if (this.rowValue && board.rows.length > 1) {
-            this._element.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
-            this.laneInput = <Combo>BaseControl.createIn(Combo, this._element, laneOptions);
+        this._element.append('<div class="lane-input" />');
+        this._element.append('<div class="done-input" />');
+        this._element.append('<div class="button-inputs" />');
+        this.updateLaneInput();
+        this.updateDoneInput();
+        this.updateButtonInputs();
+        VSS.resize();
+    }
+
+    private updateLaneInput() {
+        const laneElem = $('.lane-input', this._element);
+        laneElem.html('');
+        const columnValue = this.getColumnInputValue();
+        const column = this.board.columns.filter((c) => c.name === columnValue)[0];
+        if (this.board.rows.length > 1 
+                && column.columnType !== BoardColumnType.Incoming
+                && column.columnType !== BoardColumnType.Outgoing) {
+            const laneOptions: IComboOptions = {
+                value: this.rowValue || '(Default Lane)',
+                source: this.board.rows.map((r) => r.name || '(Default Lane)')
+            };
+            laneElem.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
+            this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
         } else {
             this.laneInput = null;
         }
-        this.updateDoneInput();
-        VSS.resize();
     }
 
     private updateDoneInput() {
@@ -151,21 +164,33 @@ export class BoardControl extends Control<{}> {
             source: ['True', 'False']
         };
         const columnValue = this.getColumnInputValue();
-        let isSplit = false;
-        for (let column of this.board.columns.filter((c) => c.name === columnValue)) {
-            isSplit = column.isSplit;
-        }
+        const isSplit = this.board.columns.filter((c) => c.name === columnValue)[0].isSplit;
+
+        const doneElem = $('.done-input', this._element);
+        doneElem.html('');
         if (isSplit) {
-            this.doneLabel = $('<label/>').addClass('workitemcontrol-label').text('Done');
-            this._element.append(this.doneLabel);
-            this.doneInput = <Combo>BaseControl.createIn(Combo, this._element, doneOptions);
+            doneElem.append($('<label/>').addClass('workitemcontrol-label').text('Done'));
+            this.doneInput = <Combo>BaseControl.createIn(Combo, doneElem, doneOptions);
         } else {
-            if (this.doneInput) {
-                this.doneLabel.remove();
-                this.doneInput.getElement().remove();
-            }
             this.doneInput = null;
         }
+    }
+
+    private updateButtonInputs() {
+        const buttonElem = $('.button-inputs', this._element);
+        buttonElem.html('');
+        if (!this.isDirty()) {
+            return;
+        }
+
+        WorkItemFormService.getService().then((service) => {
+            service.isDirty().then((isDirty) => {
+                const reset = $("<button>Reset</button>").click(() => this.onReset());
+                const save = $("<button>Save</button>").click(() => this.onSaved());
+                buttonElem.append(reset, save);
+            })
+        });
+        
     }
 
     private updateState(columnVal: string): void {
@@ -175,14 +200,17 @@ export class BoardControl extends Control<{}> {
                 service.setFieldValue("System.State", column.stateMappings[this.workItemType]);
             });
         }
+        this.updateLaneInput();
         this.updateDoneInput();
+        this.updateButtonInputs();
     }
 
     private getLaneInputValue(): string | null {
         if (!this.laneInput || this.laneInput.getSelectedIndex() < 0) {
             return null;
         }
-        return this.laneInput.getInputText();
+        const inputText = this.laneInput.getInputText();
+        return inputText === "(Default Lane)" ? null : inputText;
     }
 
     private getColumnInputValue(): string | null {
@@ -200,24 +228,30 @@ export class BoardControl extends Control<{}> {
     }
 
     public onReset() {
+        if (!this.board) {
+            return;
+        }
         this.columnInput && this.columnInput.setInputText(this.columnValue);
         this.laneInput && this.laneInput.setInputText(this.rowValue);
         this.doneInput && this.doneInput.setInputText(this.doneValue ? "True" : "False");
+        this.updateButtonInputs();
     }
 
     public onRefreshed() {
-        this.findAssociatedBoard(this.wiId, [this.board]);
+        this.findAllBoards();
     }
 
     public onFieldChanged(fieldChangedArgs: IWorkItemFieldChangedArgs) {
         const state = fieldChangedArgs.changedFields["System.State"];
-        if (!state) {
+        if (!state || !this.board) {
             return;
         }
         const column = this.board.columns.filter((c) => c.stateMappings && c.stateMappings[this.workItemType] === state)[0];
-        if (column) {
+        if (column && this.columnInput && column.name !== this.getColumnInputValue()) {
             this.columnInput.setInputText(column.name);
+            this.updateLaneInput();
             this.updateDoneInput();
+            this.updateButtonInputs();
         }
     }
 
@@ -228,23 +262,34 @@ export class BoardControl extends Control<{}> {
         );
     }
 
-    public onSaved(savedEventArgs: IWorkItemChangedArgs) {
+    public onSaved() {
+        if (!this.board) {
+            return;
+        }
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
-        if (null !== this.getColumnInputValue()) {
+        if (this.getColumnInputValue() !== null) {
             patchDocument.push(<JsonPatchOperation>{
-                op: Operation.Add,
+                op: Operation.Replace,
                 path: `/fields/${this.board.fields.columnField.referenceName}`,
                 value: this.getColumnInputValue()
             });
         }
         if (this.laneInput) {
-            patchDocument.push(<JsonPatchOperation>{
-                op: Operation.Add,
-                path: `/fields/${this.board.fields.rowField.referenceName}`,
-                value: this.getLaneInputValue()
-            });
+            const laneValue = this.getLaneInputValue();
+            if (laneValue) {
+                patchDocument.push(<JsonPatchOperation>{
+                    op: Operation.Add,
+                    path: `/fields/${this.board.fields.rowField.referenceName}`,
+                    value: this.getLaneInputValue()
+                });
+            } else {
+                patchDocument.push(<JsonPatchOperation>{
+                    op: Operation.Remove,
+                    path: `/fields/${this.board.fields.rowField.referenceName}`,
+                });
+            }
         }
-        if (this.doneInput) {
+        if (this.doneInput && this.getDoneInputValue() !== null) {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Add,
                 path: `/fields/${this.board.fields.doneField.referenceName}`,
