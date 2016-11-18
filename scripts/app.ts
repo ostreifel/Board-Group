@@ -3,26 +3,11 @@ import Controls = require("VSS/Controls");
 import Q = require("q");
 import {IWorkItemFieldChangedArgs, IWorkItemNotificationListener} from "TFS/WorkItemTracking/ExtensionContracts";
 
-let boardControl: BoardControl;
-const refresh = () => {
-    const container = $('.board-control')
-    container.empty();
-    boardControl = <BoardControl>Controls.BaseControl.createIn(BoardControl, container);
-}
+const boardControl = <BoardControl>Controls.BaseControl.createIn(BoardControl, $('.board-control'));
 
-refresh();
-VSS.register(VSS.getContribution().id, {
-    // onFieldChanged: (fieldChangedArgs: IWorkItemFieldChangedArgs) => {
-    //     const changes = fieldChangedArgs.changedFields;
-    //     for (var referenceName in changes) {
-    //         if (referenceName.match(/_Kanban.Column/)) {
-    //             const column = changes[referenceName];
-    //             const lane = changes[referenceName.replace('Column', 'Lane')] || '(Default Lane)';
-    //             boardControl.update(column, lane);
-    //             break;
-    //         }
-    //     }
-    // },
-    // onRefreshed: refresh,
-    // onReset: refresh
-});
+const contextData = <IWorkItemNotificationListener>{};
+contextData.onSaved = (savedEventArgs) => boardControl.onSaved(savedEventArgs);
+contextData.onFieldChanged = (fieldChangedArgs) => boardControl.onFieldChanged(fieldChangedArgs);
+contextData.onReset = () => boardControl.onReset();
+contextData.onRefreshed = () => boardControl.onRefreshed();
+VSS.register(VSS.getContribution().id, contextData);
