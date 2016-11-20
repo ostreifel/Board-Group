@@ -7,7 +7,7 @@ import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { BoardReference, Board, BoardColumnType } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TeamContext } from "TFS/Core/Contracts";
-import { IWorkItemChangedArgs, IWorkItemFieldChangedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
+import { IWorkItemChangedArgs, IWorkItemFieldChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import {JsonPatchDocument, JsonPatchOperation, Operation} from "VSS/WebApi/Contracts";
 
 export interface IBoardControlOptions {
@@ -35,10 +35,7 @@ export class BoardControl extends Control<{}> {
     private laneInput: Combo;
     private doneInput: Combo;
     public initialize() {
-        this._element.append($('<div/>').text('Looking for associated board...'));
         VSS.resize();
-        this.findAllBoards();
-
     }
     private findAllBoards() {
         const optionsDeferred: Q.Deferred<IBoardControlOptions> = Q.defer<IBoardControlOptions>();
@@ -53,19 +50,16 @@ export class BoardControl extends Control<{}> {
             team: VSS.getWebContext().team.name,
             teamId: VSS.getWebContext().team.id
         };
-        WorkItemFormService.getService().then((service) => {
-            Q.all([service.getId(), getWorkClient().getBoards(teamContext)]).then(
-                ([wiId, boardReferences]) => {
-                    Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
-                        (boards) => this.findAssociatedBoard(wiId, boards)
-                    )
-                }
-            )
-        });
+        getWorkClient().getBoards(teamContext).then(
+            (boardReferences) => {
+                Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
+                    (boards) => this.findAssociatedBoard(boards)
+                )
+            }
+        );
     }
 
-    private findAssociatedBoard(wiId: number, boards: Board[]) {
-        this.wiId = wiId;
+    private findAssociatedBoard(boards: Board[]) {
         const fields: string[] = ["System.WorkItemType"];
         const fieldMapping: { [refName: string]: Board } = {};
         for (let board of boards) {
@@ -74,7 +68,7 @@ export class BoardControl extends Control<{}> {
                 fieldMapping[field.referenceName] = board;
             }
         }
-        getWITClient().getWorkItem(wiId, fields).then(
+        getWITClient().getWorkItem(this.wiId, fields).then(
             (workItem) => {
                 if (Object.keys(workItem.fields).length === 1) {
                     this.updateNoBoard();
@@ -244,6 +238,15 @@ export class BoardControl extends Control<{}> {
             return false;
         }
         return this.doneInput.getInputText() === "True";
+    }
+
+    public onLoaded(loadedArgs: IWorkItemLoadedArgs) {
+        if (!loadedArgs.isNew) {
+            this.wiId = loadedArgs.id;
+            this._element.html('');
+            this._element.append($('<div/>').text('Looking for associated board...'));
+            this.findAllBoards();
+        }
     }
 
     public onReset() {

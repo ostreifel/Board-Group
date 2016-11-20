@@ -21,4 +21,5 @@ contextData.onSaved = (savedEventArgs) => boardControl.onSaved();
 contextData.onFieldChanged = (fieldChangedArgs) => boardControl.onFieldChanged(fieldChangedArgs);
 contextData.onReset = () => boardControl.onReset();
 contextData.onRefreshed = () => boardControl.onRefreshed();
+contextData.onLoaded = (loadedArgs) => boardControl.onLoaded(loadedArgs);
 VSS.register(VSS.getContribution().id, contextData);
