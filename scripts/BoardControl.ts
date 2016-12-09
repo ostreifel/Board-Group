@@ -8,7 +8,7 @@ import { BoardReference, Board, BoardColumnType } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TeamContext } from "TFS/Core/Contracts";
 import { IWorkItemChangedArgs, IWorkItemFieldChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
-import {JsonPatchDocument, JsonPatchOperation, Operation} from "VSS/WebApi/Contracts";
+import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 
 export interface IBoardControlOptions {
     columnValue: string;
@@ -102,6 +102,9 @@ export class BoardControl extends Control<{}> {
                     boardControl.updateState(box.getInputText());
                     boardControl.updateButtonInputs();
                 }
+            },
+            dropOptions: {
+                maxRowCount: 5
             }
         };
 
@@ -139,19 +142,23 @@ export class BoardControl extends Control<{}> {
         laneElem.html('');
         const columnValue = this.getColumnInputValue();
         const column = this.board.columns.filter((c) => c.name === columnValue)[0];
-        if (this.board.rows.length > 1 
-                && column.columnType !== BoardColumnType.Incoming
-                && column.columnType !== BoardColumnType.Outgoing) {
+        if (this.board.rows.length > 1
+            && column.columnType !== BoardColumnType.Incoming
+            && column.columnType !== BoardColumnType.Outgoing) {
             const boardControl = this;
             const laneOptions: IComboOptions = {
                 value: this.rowValue || '(Default Lane)',
                 source: this.board.rows.map((r) => r.name || '(Default Lane)'),
                 change: function () {
-                const box: Combo = this;
-                if (box.getSelectedIndex() > -1) {
-                    boardControl.updateButtonInputs();
+                    VSS.resize();
+                    const box: Combo = this;
+                    if (box.getSelectedIndex() > -1) {
+                        boardControl.updateButtonInputs();
+                    }
+                },
+                dropOptions: {
+                    maxRowCount: 5
                 }
-            }
             };
             laneElem.append($('<label/>').addClass('workitemcontrol-label').text('Board Lane'));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
@@ -192,22 +199,16 @@ export class BoardControl extends Control<{}> {
             return;
         }
 
-        WorkItemFormService.getService().then((service) => {
-            service.isDirty().then((isDirty) => {
-                if (!isDirty) {
-                    buttonElem.html('');
-                    const reset = $("<button>Reset</button>").click(() => this.onReset());
-                    const save = $("<button>Save</button>").click(() => this.onSaved());
-                    buttonElem.append(reset, save);
-                    VSS.resize();
-                }
-            })
-        });
-        
+        buttonElem.html('');
+        const reset = $("<button>Reset</button>").click(() => this.onReset());
+        const save = $("<button>Save</button>").click(() => this.onSaved());
+        buttonElem.append(reset, save);
+        VSS.resize();
+
     }
 
     private updateState(columnVal: string): void {
-        const column = this.board.columns.filter((c) => c.name ===columnVal)[0];
+        const column = this.board.columns.filter((c) => c.name === columnVal)[0];
         if (column.stateMappings && column.stateMappings[this.workItemType]) {
             WorkItemFormService.getService().then((service) => {
                 service.setFieldValue("System.State", column.stateMappings[this.workItemType]);

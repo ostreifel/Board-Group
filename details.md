@@ -26,6 +26,12 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+v2.1.10
+
+Fixes dropdown clipping
+
+Makes save buttons more consistant
+
 v2.1.3
 
 Updates details.md
