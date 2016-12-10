@@ -17,9 +17,7 @@ $(window).bind('keydown', function(event) {
 const boardControl = <BoardControl>Controls.BaseControl.createIn(BoardControl, $('.board-control'));
 
 const contextData = <IWorkItemNotificationListener>{};
-contextData.onSaved = (savedEventArgs) => boardControl.onSaved();
-contextData.onFieldChanged = (fieldChangedArgs) => boardControl.onFieldChanged(fieldChangedArgs);
-contextData.onReset = () => boardControl.onReset();
+contextData.onSaved = (savedEventArgs) => boardControl.onSaved(savedEventArgs);
 contextData.onRefreshed = () => boardControl.onRefreshed();
 contextData.onLoaded = (loadedArgs) => boardControl.onLoaded(loadedArgs);
 VSS.register(VSS.getContribution().id, contextData);

@@ -99,8 +99,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
-                    boardControl.updateState(box.getInputText());
-                    boardControl.updateButtonInputs();
+                    boardControl.save("columnField", boardControl.getColumnInputValue());
                 }
             },
             dropOptions: {
@@ -130,11 +129,9 @@ export class BoardControl extends Control<{}> {
         }
         this._element.append('<div class="lane-input" />');
         this._element.append('<div class="done-input" />');
-        this._element.append('<div class="button-inputs" />');
+        this._element.append('<div>Board changes are saved immediately.</div>')
         this.updateLaneInput();
         this.updateDoneInput();
-        this.updateButtonInputs();
-        VSS.resize();
     }
 
     private updateLaneInput() {
@@ -153,7 +150,7 @@ export class BoardControl extends Control<{}> {
                     VSS.resize();
                     const box: Combo = this;
                     if (box.getSelectedIndex() > -1) {
-                        boardControl.updateButtonInputs();
+                        boardControl.save("rowField", boardControl.getLaneInputValue());
                     }
                 },
                 dropOptions: {
@@ -175,7 +172,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
-                    boardControl.updateButtonInputs();
+                    boardControl.save("doneField", boardControl.getDoneInputValue());
                 }
             }
         };
@@ -190,33 +187,6 @@ export class BoardControl extends Control<{}> {
         } else {
             this.doneInput = null;
         }
-    }
-
-    private updateButtonInputs() {
-        const buttonElem = $('.button-inputs', this._element);
-        buttonElem.html('');
-        if (!this.isDirty()) {
-            return;
-        }
-
-        buttonElem.html('');
-        const reset = $("<button>Reset</button>").click(() => this.onReset());
-        const save = $("<button>Save</button>").click(() => this.onSaved());
-        buttonElem.append(reset, save);
-        VSS.resize();
-
-    }
-
-    private updateState(columnVal: string): void {
-        const column = this.board.columns.filter((c) => c.name === columnVal)[0];
-        if (column.stateMappings && column.stateMappings[this.workItemType]) {
-            WorkItemFormService.getService().then((service) => {
-                service.setFieldValue("System.State", column.stateMappings[this.workItemType]);
-            });
-        }
-        this.updateLaneInput();
-        this.updateDoneInput();
-        this.updateButtonInputs();
     }
 
     private getLaneInputValue(): string | null {
@@ -250,35 +220,8 @@ export class BoardControl extends Control<{}> {
         }
     }
 
-    public onReset() {
-        if (!this.board) {
-            return;
-        }
-        this.columnInput && this.columnInput.setInputText(this.columnValue);
-        this.laneInput && this.laneInput.setInputText(this.rowValue);
-        this.doneInput && this.doneInput.setInputText(this.doneValue ? "True" : "False");
-        this.updateButtonInputs();
-    }
-
     public onRefreshed() {
         this.findAllBoards();
-    }
-
-    public onFieldChanged(fieldChangedArgs: IWorkItemFieldChangedArgs) {
-        if (!this.board) {
-            return;
-        }
-        const state = fieldChangedArgs.changedFields["System.State"];
-        if (!state || !this.board) {
-            this.updateButtonInputs();
-        }
-        const column = this.board.columns.filter((c) => c.stateMappings && c.stateMappings[this.workItemType] === state)[0];
-        if (column && this.columnInput && column.name !== this.getColumnInputValue()) {
-            this.columnInput.setInputText(column.name);
-            this.updateLaneInput();
-            this.updateDoneInput();
-        }
-        this.updateButtonInputs();
     }
 
     public isDirty(): boolean {
@@ -288,46 +231,34 @@ export class BoardControl extends Control<{}> {
         );
     }
 
-    public onSaved() {
+    private save(field: 'columnField' | 'rowField', val: string);
+    private save(field: 'doneField', val: boolean);
+    private save(field: 'columnField' | 'rowField' | 'doneField', val: string | boolean) {
         if (!this.board) {
+            console.warn(`Save called on ${field} with ${val} when board not set`);
             return;
         }
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
-        if (this.getColumnInputValue() !== null) {
+        if (field === 'rowField' && !val) {
             patchDocument.push(<JsonPatchOperation>{
-                op: Operation.Replace,
-                path: `/fields/${this.board.fields.columnField.referenceName}`,
-                value: this.getColumnInputValue()
+                op: Operation.Remove,
+                path: `/fields/${this.board.fields[field].referenceName}`
             });
-        }
-        if (this.laneInput) {
-            const laneValue = this.getLaneInputValue();
-            if (laneValue) {
-                patchDocument.push(<JsonPatchOperation>{
-                    op: Operation.Add,
-                    path: `/fields/${this.board.fields.rowField.referenceName}`,
-                    value: this.getLaneInputValue()
-                });
-            } else {
-                patchDocument.push(<JsonPatchOperation>{
-                    op: Operation.Remove,
-                    path: `/fields/${this.board.fields.rowField.referenceName}`,
-                });
-            }
-        }
-        if (this.doneInput && this.getDoneInputValue() !== null) {
+        } else {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Add,
-                path: `/fields/${this.board.fields.doneField.referenceName}`,
-                value: this.getDoneInputValue()
+                path: `/fields/${this.board.fields[field].referenceName}`,
+                value: val
             });
         }
-        if (this.isDirty()) {
-            getWITClient().updateWorkItem(patchDocument, this.wiId).then(
-                (workItem) => {
-                    this.updateForBoard(workItem.fields, this.board);
-                }
-            );
-        }
+        getWITClient().updateWorkItem(patchDocument, this.wiId).then(
+            (workItem) => {
+                this.updateForBoard(workItem.fields, this.board);
+            }
+        );
+    }
+
+    public onSaved(args: IWorkItemChangedArgs) {
+        this.findAllBoards();
     }
 }

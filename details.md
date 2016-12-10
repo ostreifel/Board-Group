@@ -26,28 +26,19 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
-v2.1.10
-
+#### v2.1.15
+Switches to immediate save model to avoid issue where save is sometimes not completed.
+#### v2.1.10
 Fixes dropdown clipping
 
 Makes save buttons more consistant
-
-v2.1.3
-
+#### v2.1.3
 Updates details.md
-
-v2.1.2
-
+#### v2.1.2
 Updates change log.
-
-v2.1.1
-
+#### v2.1.1
 Fixes bug where group was not updated when switching between workitems in query results view.
-
-v2.0.4
-
+#### v2.0.4
 Dropdown width.
-
-v2.0.1
-
+#### v2.0.1
 Moves from form service to rest api.
