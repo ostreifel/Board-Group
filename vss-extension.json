@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.1.16",
+    "version": "2.2.2",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",
@@ -50,6 +50,10 @@
         {
             "path": "boardGroup.html",
             "addressable": true
+        },
+        {
+            "path": "boardContext.html",
+            "addressable": true
         }
     ],
     "categories": [
@@ -67,6 +71,18 @@
                 "name": "Board",
                 "uri": "boardGroup.html",
                 "height": 200
+            }
+        },
+        {
+            "id": "board-context-menu",
+            "type": "ms.vss-web.action-provider",
+            "description": "Edit board column from board card",
+            "targets": [
+                "ms.vss-work-web.backlog-board-card-item-menu"
+            ],
+            "properties": {
+                "name": "Board context menu",
+                "uri": "boardContext.html"
             }
         }
     ]

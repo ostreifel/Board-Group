@@ -1,86 +1,61 @@
 import { Control, BaseControl } from "VSS/Controls";
 import { Combo, IComboOptions } from "VSS/Controls/Combos";
-import Q = require("q");
-import { getClient as getWorkClient } from "TFS/Work/RestClient";
-import { Board, BoardColumnType } from "TFS/Work/Contracts";
-import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
-import { TeamContext } from "TFS/Core/Contracts";
+import { BoardColumnType } from "TFS/Work/Contracts";
 import { IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
-import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
+import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
+import { BoardModel } from "./BoardModel";
 
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
-    private board: Board;
-    private columnValue: string;
-    private rowValue: string;
-    private doneValue: boolean;
     private workItemType: string;
+    private boardModel: BoardModel;
 
     // ui
     private columnInput: Combo;
     private laneInput: Combo;
     private doneInput: Combo;
-    public initialize() {
-        VSS.resize();
-    }
-    private findAllBoards() {
-        const teamContext: TeamContext = {
-            project: VSS.getWebContext().project.name,
-            projectId: VSS.getWebContext().project.id,
-            team: VSS.getWebContext().team.name,
-            teamId: VSS.getWebContext().team.id
-        };
-        getWorkClient().getBoards(teamContext).then(
-            (boardReferences) => {
-                Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
-                    (boards) => this.findAssociatedBoard(boards)
-                );
-            }
-        );
-    }
 
-    private findAssociatedBoard(boards: Board[]) {
-        const fields: string[] = ["System.WorkItemType"];
-        const fieldMapping: { [refName: string]: Board } = {};
-        for (let board of boards) {
-            for (let field of [board.fields.columnField, board.fields.rowField, board.fields.doneField]) {
-                fields.push(field.referenceName);
-                fieldMapping[field.referenceName] = board;
-            }
-        }
-        getWITClient().getWorkItem(this.wiId, fields).then(
-            (workItem) => {
-                if (Object.keys(workItem.fields).length === 1) {
-                    this.updateNoBoard();
+    public refresh() {
+        const id = "System.Id";
+        const wit = "System.WorkItemType";
+        WorkItemFormService.getService().then(service => {
+            service.getFieldValues([id, wit]).then(fields => {
+                this.wiId = fields[id] as number;
+                this.workItemType = fields[wit] as string;
+                const refreshUI = () => {
+                    if (this.boardModel.getBoard()) {
+                        this.updateForBoard();
+                    } else {
+                        this.updateNoBoard();
+                    }
+                };
+                if (!this.boardModel) {
+                    BoardModel.create(this.wiId, this.workItemType).then(boardModel => {
+                        this.boardModel = boardModel;
+                        refreshUI();
+                    });
                 } else {
-                    const board = fieldMapping[Object.keys(workItem.fields)[1]];
-                    this.updateForBoard(workItem.fields, board);
+                    this.boardModel.refresh().then(refreshUI);
                 }
-            }
-        );
+            });
+        });
     }
 
     private updateNoBoard() {
-        this.board = null;
         this._element.html("<div>No associated board for current team</div>");
     }
 
-    private updateForBoard(fields: { [refName: string]: any }, board: Board) {
-        this.board = board;
-        this.columnValue = fields[board.fields.columnField.referenceName] || null;
-        this.rowValue = fields[board.fields.rowField.referenceName] || null;
-        this.doneValue = fields[board.fields.doneField.referenceName] || false;
-        this.workItemType = fields["System.WorkItemType"];
-
+    private updateForBoard() {
         const boardControl = this;
         const columnOptions: IComboOptions = {
-            value: this.columnValue,
-            source: board.columns.map((c) => c.name),
+            value: this.boardModel.getColumn(),
+            source: this.boardModel.getBoard().columns.map((c) => c.name),
             change: function () {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
-                    boardControl.save("columnField", boardControl.getColumnInputValue());
+                    boardControl.boardModel.save("columnField", boardControl.getColumnInputValue()).then(
+                        () => boardControl.updateForBoard());
                 }
             },
             dropOptions: {
@@ -91,17 +66,18 @@ export class BoardControl extends Control<{}> {
         const projectName = VSS.getWebContext().project.name;
         const teamName = VSS.getWebContext().team.name;
         const uri = VSS.getWebContext().host.uri;
-        const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${board.name}`;
+        const boardName = this.boardModel.getBoard().name;
+        const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").text(board.name)
+        const boardLink = $("<a/>").text(this.boardModel.getBoard().name)
             .attr({
                 href: boardUrl,
                 target: "_parent"
             });
 
         this._element.append(boardLink).append($("<br><br>"));
-        if (this.columnValue) {
+        if (this.boardModel.getColumn()) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Board Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
         } else {
@@ -118,19 +94,20 @@ export class BoardControl extends Control<{}> {
         const laneElem = $(".lane-input", this._element);
         laneElem.html("");
         const columnValue = this.getColumnInputValue();
-        const column = this.board.columns.filter((c) => c.name === columnValue)[0];
-        if (this.board.rows.length > 1
+        const column = this.boardModel.getBoard().columns.filter((c) => c.name === columnValue)[0];
+        if (this.boardModel.getBoard().rows.length > 1
             && column.columnType !== BoardColumnType.Incoming
             && column.columnType !== BoardColumnType.Outgoing) {
             const boardControl = this;
             const laneOptions: IComboOptions = {
-                value: this.rowValue || "(Default Lane)",
-                source: this.board.rows.map((r) => r.name || "(Default Lane)"),
+                value: this.boardModel.getRow() || "(Default Lane)",
+                source: this.boardModel.getBoard().rows.map((r) => r.name || "(Default Lane)"),
                 change: function () {
                     VSS.resize();
                     const box: Combo = this;
                     if (box.getSelectedIndex() > -1) {
-                        boardControl.save("rowField", boardControl.getLaneInputValue());
+                        boardControl.boardModel.save("rowField", boardControl.getLaneInputValue()).then(
+                            () => boardControl.updateForBoard());
                     }
                 },
                 dropOptions: {
@@ -147,17 +124,18 @@ export class BoardControl extends Control<{}> {
     private updateDoneInput() {
         const boardControl = this;
         const doneOptions: IComboOptions = {
-            value: this.doneValue ? "True" : "False",
+            value: this.boardModel.getDoing() ? "True" : "False",
             source: ["True", "False"],
             change: function () {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
-                    boardControl.save("doneField", boardControl.getDoneInputValue());
+                    boardControl.boardModel.save("doneField", boardControl.getDoneInputValue()).then(
+                        () => boardControl.updateForBoard());
                 }
             }
         };
         const columnValue = this.getColumnInputValue();
-        const isSplit = this.board.columns.filter((c) => c.name === columnValue)[0].isSplit;
+        const isSplit = this.boardModel.getBoard().columns.filter((c) => c.name === columnValue)[0].isSplit;
 
         const doneElem = $(".done-input", this._element);
         doneElem.html("");
@@ -196,49 +174,15 @@ export class BoardControl extends Control<{}> {
             this.wiId = loadedArgs.id;
             this._element.html("");
             this._element.append($("<div/>").text("Looking for associated board..."));
-            this.findAllBoards();
+            this.refresh();
         }
     }
 
     public onRefreshed() {
-        this.findAllBoards();
-    }
-
-    public isDirty(): boolean {
-        return (this.rowValue !== this.getLaneInputValue()
-            || this.columnValue !== this.getColumnInputValue()
-            || (this.doneValue) !== this.getDoneInputValue()
-        );
-    }
-
-    private save(field: "columnField" | "rowField", val: string);
-    private save(field: "doneField", val: boolean);
-    private save(field: "columnField" | "rowField" | "doneField", val: string | boolean) {
-        if (!this.board) {
-            console.warn(`Save called on ${field} with ${val} when board not set`);
-            return;
-        }
-        const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
-        if (field === "rowField" && !val) {
-            patchDocument.push(<JsonPatchOperation>{
-                op: Operation.Remove,
-                path: `/fields/${this.board.fields[field].referenceName}`
-            });
-        } else {
-            patchDocument.push(<JsonPatchOperation>{
-                op: Operation.Add,
-                path: `/fields/${this.board.fields[field].referenceName}`,
-                value: val
-            });
-        }
-        getWITClient().updateWorkItem(patchDocument, this.wiId).then(
-            (workItem) => {
-                this.updateForBoard(workItem.fields, this.board);
-            }
-        );
+        this.refresh();
     }
 
     public onSaved(args: IWorkItemChangedArgs) {
-        this.findAllBoards();
+        this.refresh();
     }
 }

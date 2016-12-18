@@ -12,8 +12,10 @@
         "./typings/index.d.ts"
     ],
     "files": [
+        "scripts/boardContext.ts",
         "scripts/BoardControl.ts",
         "scripts/boardGroup.ts",
+        "scripts/BoardModel.ts",
         "typings/index.d.ts"
     ]
 }
