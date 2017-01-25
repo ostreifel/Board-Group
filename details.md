@@ -30,11 +30,12 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
-2.2.1 Adds context menu to board  
-2.1.15 Switches to immediate save model to avoid issue where save is sometimes not completed.  
-2.1.10 Fixes dropdown clipping, Makes save buttons more consistent  
-2.1.3 Updates details.md  
-2.1.2 Updates change log.  
-2.1.1 Fixes bug where group was not updated when switching between workitems in query results view.  
-2.0.4 Dropdown width.  
-2.0.1 Moves from form service to rest api.
+(01/24/16) 2.2.3 Github link  
+(12/17/16) 2.2.1 Adds context menu to board  
+(12/09/16) 2.1.15 Switches to immediate save model to avoid issue where save is sometimes not completed.  
+(12/08/16) 2.1.10 Fixes dropdown clipping, Makes save buttons more consistent  
+(11/19/16) 2.1.3 Updates details.md  
+(11/19/16) 2.1.2 Updates change log.  
+(11/19/16) 2.1.1 Fixes bug where group was not updated when switching between workitems in query results view.  
+(11/19/16) 2.0.4 Dropdown width.  
+(11/17/16) 2.0.1 Moves from form service to rest api.
