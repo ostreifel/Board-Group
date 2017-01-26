@@ -55,7 +55,10 @@ export class BoardControl extends Control<{}> {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
                     boardControl.boardModel.save("columnField", boardControl.getColumnInputValue()).then(
-                        () => boardControl.updateForBoard());
+                        () => {
+                            boardControl.updateForBoard();
+                            boardControl.refreshWI();
+                        });
                 }
             },
             dropOptions: {
@@ -90,6 +93,14 @@ export class BoardControl extends Control<{}> {
         this.updateDoneInput();
     }
 
+    private refreshWI() {
+        WorkItemFormService.getService().then(service => {
+            if (service["refresh"] instanceof Function) {
+                service["refresh"]();
+            }
+        });
+    }
+
     private updateLaneInput() {
         const laneElem = $(".lane-input", this._element);
         laneElem.html("");
@@ -107,7 +118,10 @@ export class BoardControl extends Control<{}> {
                     const box: Combo = this;
                     if (box.getSelectedIndex() > -1) {
                         boardControl.boardModel.save("rowField", boardControl.getLaneInputValue()).then(
-                            () => boardControl.updateForBoard());
+                            () => {
+                                boardControl.updateForBoard();
+                                boardControl.refreshWI();
+                            });
                     }
                 },
                 dropOptions: {
@@ -130,7 +144,10 @@ export class BoardControl extends Control<{}> {
                 const box: Combo = this;
                 if (box.getSelectedIndex() > -1) {
                     boardControl.boardModel.save("doneField", boardControl.getDoneInputValue()).then(
-                        () => boardControl.updateForBoard());
+                        () => {
+                            boardControl.updateForBoard();
+                            boardControl.refreshWI();
+                        });
                 }
             }
         };

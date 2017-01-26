@@ -7,6 +7,7 @@ Adds a context menu items to the kanban cards to change column and row without d
 ![kanban context menu image](img/contextMenu.png)
 
 # Configuration with on Team Services 
+
 To configure where the board group is added click on the customize option from the work item form. Then drag the group where desired or hide it.
 
 ![kanban group image](img/customizeToolbar.png) 
@@ -30,6 +31,8 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+
+(01/26/16) 2.2.6 Refresh WI on board field change  
 (01/24/16) 2.2.3 Github link  
 (12/17/16) 2.2.1 Adds context menu to board  
 (12/09/16) 2.1.15 Switches to immediate save model to avoid issue where save is sometimes not completed.  
