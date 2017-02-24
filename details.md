@@ -32,8 +32,8 @@ Within the same Weblayout choose a Section element and add
 
 # Change Log
 
-(01/26/16) 2.2.6 Refresh WI on board field change  
-(01/24/16) 2.2.3 Github link  
+(01/26/17) 2.2.6 Refresh WI on board field change  
+(01/24/17) 2.2.3 Github link  
 (12/17/16) 2.2.1 Adds context menu to board  
 (12/09/16) 2.1.15 Switches to immediate save model to avoid issue where save is sometimes not completed.  
 (12/08/16) 2.1.10 Fixes dropdown clipping, Makes save buttons more consistent  
