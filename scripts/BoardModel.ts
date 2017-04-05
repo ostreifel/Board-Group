@@ -14,8 +14,8 @@ function trackEvent(name: string, properties?: {
     }
 }
 export class BoardModel {
-    public static create(id: number, workItemType: string): IPromise<BoardModel> {
-        const boardModel = new BoardModel(id, workItemType);
+    public static create(id: number, workItemType: string, location: string): IPromise<BoardModel> {
+        const boardModel = new BoardModel(id, workItemType, location);
         return boardModel.refresh().then(() => boardModel);
     }
     private board: Board;
@@ -26,7 +26,7 @@ export class BoardModel {
     public getRow = () => this.boardRow;
     private boardDoing: boolean;
     public getDoing = () => Boolean(this.boardDoing);
-    private constructor(readonly id: number, readonly workItemType: string) { }
+    private constructor(readonly id: number, readonly workItemType: string, readonly location) { }
 
     public refresh(): IPromise<void> {
         const teamContext: TeamContext = {
@@ -78,7 +78,7 @@ export class BoardModel {
             console.warn(`Save called on ${field} with ${val} when board not set`);
             return Q(null).then(() => void 0);
         }
-        trackEvent("UpdateBoardField", { field });
+        trackEvent("UpdateBoardField", { field, location: this.location });
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{
