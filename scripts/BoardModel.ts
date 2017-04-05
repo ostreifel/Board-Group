@@ -5,6 +5,14 @@ import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
 
+function trackEvent(name: string, properties?: {
+    [name: string]: string;
+}) {
+    if (window["appInsights"]) {
+        window["appInsights"].trackEvent(name, properties);
+        window["appInsights"].flush();
+    }
+}
 export class BoardModel {
     public static create(id: number, workItemType: string): IPromise<BoardModel> {
         const boardModel = new BoardModel(id, workItemType);
@@ -70,6 +78,7 @@ export class BoardModel {
             console.warn(`Save called on ${field} with ${val} when board not set`);
             return Q(null).then(() => void 0);
         }
+        trackEvent("UpdateBoardField", { field });
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{
