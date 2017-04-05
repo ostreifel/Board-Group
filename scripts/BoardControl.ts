@@ -24,7 +24,7 @@ export class BoardControl extends Control<{}> {
                 this.wiId = fields[id] as number;
                 this.workItemType = fields[wit] as string;
                 const refreshUI = () => {
-                    if (this.boardModel.getBoard()) {
+                    if (this.boardModel.getColumn()) {
                         this.updateForBoard();
                     } else {
                         this.updateNoBoard();
