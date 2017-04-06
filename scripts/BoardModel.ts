@@ -1,6 +1,6 @@
 import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { Board } from "TFS/Work/Contracts";
-import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
+import { getWITClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
@@ -51,7 +51,8 @@ export class BoardModel {
             }
         });
         this.board = matchingBoards[0];
-        this.boardColumn = this.boardDoing = this.boardRow = undefined;
+        this.boardColumn = this.boardRow = undefined;
+        this.boardDoing = false;
 
         if (!this.board) {
             return Q(null).then(() => void 0);

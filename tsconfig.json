@@ -4,7 +4,8 @@
         "sourceMap": false,
         "rootDir": "./scripts",
         "target": "es5",
-        "jsx": "react"
+        "jsx": "react",
+        "strictNullChecks": true
     },
     "filesGlob": [
         "./scripts/**/*.ts",
@@ -16,6 +17,9 @@
         "scripts/BoardControl.ts",
         "scripts/boardGroup.ts",
         "scripts/BoardModel.ts",
+        "scripts/locateTeam/teamNode.ts",
+        "scripts/locateTeam/teamNodeCache.ts",
+        "scripts/locateTeam/teamNodeStorage.ts",
         "typings/index.d.ts"
     ]
 }
