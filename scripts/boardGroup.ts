@@ -21,4 +21,5 @@ const contextData: Partial<IWorkItemNotificationListener> = {
     onRefreshed: () => boardControl.onRefreshed(),
     onLoaded: (loadedArgs) => boardControl.onLoaded(loadedArgs)
 };
+
 VSS.register(VSS.getContribution().id, contextData);
