@@ -45,9 +45,7 @@ function getTeamAreaPaths(projectId: string, team: ITeam): IPromise<ITeamAreaPat
             if (fieldValues.field.referenceName === "System.AreaPath") {
                 return {
                     team,
-                    areaPaths: fieldValues.values.map((teamFieldValue) => {
-                        return teamFieldValue.value;
-                    })
+                    areaPaths: fieldValues.values
                 };
             }
             else {
