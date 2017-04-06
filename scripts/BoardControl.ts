@@ -31,7 +31,7 @@ export class BoardControl extends Control<{}> {
                     }
                 };
                 if (!this.boardModel) {
-                    BoardModel.create(this.wiId, this.workItemType, "form").then(boardModel => {
+                    BoardModel.create(this.wiId, "form").then(boardModel => {
                         this.boardModel = boardModel;
                         refreshUI();
                     });

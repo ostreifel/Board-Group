@@ -52,7 +52,7 @@ interface IBoardContext {
 }
 const menuAction: Partial<IContributedMenuSource> = {
     getMenuItems: (context: IBoardContext) =>
-        BoardModel.create(context.id, context.workItemType, "card").then(boardModel =>
+        BoardModel.create(context.id, "card").then(boardModel =>
             menuItemsFromBoard(boardModel))
 };
 

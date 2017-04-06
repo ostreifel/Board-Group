@@ -16,8 +16,6 @@ $(window).bind("keydown", function (event: JQueryEventObject) {
 
 const boardControl = <BoardControl>Controls.BaseControl.createIn(BoardControl, $(".board-control"));
 
-rebuildCache(VSS.getWebContext().project.id);
-
 const contextData: Partial<IWorkItemNotificationListener> = {
     onSaved: (savedEventArgs) => boardControl.onSaved(savedEventArgs),
     onRefreshed: () => boardControl.onRefreshed(),

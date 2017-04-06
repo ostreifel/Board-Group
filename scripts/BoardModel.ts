@@ -1,9 +1,11 @@
 import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { Board } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
+import { WorkItem } from "TFS/WorkItemTracking/Contracts";
 import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
+import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 
 function trackEvent(name: string, properties?: {
     [name: string]: string;
@@ -13,64 +15,74 @@ function trackEvent(name: string, properties?: {
         window["appInsights"].flush();
     }
 }
+
+const projectField = "System.TeamProject";
+const witField = "System.WorkItemType";
+const areaPathField = "System.AreaPath";
 export class BoardModel {
-    public static create(id: number, workItemType: string, location: string): IPromise<BoardModel> {
-        const boardModel = new BoardModel(id, workItemType, location);
+    public static create(id: number, location: string): IPromise<BoardModel> {
+        const boardModel = new BoardModel(id, location);
         return boardModel.refresh().then(() => boardModel);
     }
+    // TODO make Board | null;
     private board: Board;
     public getBoard = () => this.board;
     private boardColumn: string | undefined;
     public getColumn = () => this.boardColumn;
     private boardRow: string | undefined;
     public getRow = () => this.boardRow;
-    private boardDoing: boolean;
+    private boardDoing: boolean | undefined;
     public getDoing = () => Boolean(this.boardDoing);
-    private constructor(readonly id: number, readonly workItemType: string, readonly location) { }
+
+
+    private workItem: WorkItem;
+    private workItemType: string;
+    private constructor(readonly id: number, readonly location) { }
 
     public refresh(): IPromise<void> {
-        const teamContext: TeamContext = {
-            project: VSS.getWebContext().project.name,
-            projectId: VSS.getWebContext().project.id,
-            team: VSS.getWebContext().team.name,
-            teamId: VSS.getWebContext().team.id
-        };
-        return getWorkClient().getBoards(teamContext).then(
-            (boardReferences) => {
-                return Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
-                    (boards) => this.findAssociatedBoard(boards)
-                ).then(() => void 0);
-            }
-        );
+        delete this.board;
+        this.boardColumn = this.boardRow = this.boardDoing = undefined;
+        return getWITClient().getWorkItem(this.id).then(wi => {
+            this.workItem = wi;
+            this.workItemType = wi.fields[witField];
+            return getTeamsForAreaPathFromCache(wi.fields[projectField], wi.fields[areaPathField]).then(teams => {
+                if (teams.length === 0) {
+                    return;
+                }
+                const lastTeam = teams[teams.length - 1];
+                const teamContext: TeamContext = {
+                    project: wi.fields[projectField],
+                    projectId: "",
+                    team: lastTeam.name,
+                    teamId: lastTeam.id
+                };
+                return getWorkClient().getBoards(teamContext).then(
+                    (boardReferences) => {
+                        return Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
+                            (boards) => this.findAssociatedBoard(boards)
+                        ).then(() => void 0);
+                    }
+                );
+            });
+        });
     }
 
-    private findAssociatedBoard(boards: Board[]): IPromise<void> {
+    private findAssociatedBoard(boards: Board[]): void {
         const matchingBoards = boards.filter(b => {
             for (let key in b.allowedMappings) {
                 return this.workItemType in b.allowedMappings[key];
             }
         });
         this.board = matchingBoards[0];
-        this.boardColumn = this.boardRow = undefined;
-        this.boardDoing = false;
-
         if (!this.board) {
-            return Q(null).then(() => void 0);
+            return;
         }
-
-        const fields: string[] = [
-            this.board.fields.columnField.referenceName,
-            this.board.fields.rowField.referenceName,
-            this.board.fields.doneField.referenceName,
-        ];
-        return getWITClient().getWorkItem(this.id, fields).then(
-            (workItem) => { this.updateFields(workItem.fields); return void 0; }
-        );
+        this.updateFields();
     }
-    private updateFields(fields: { [refName: string]: any }): void {
-        this.boardColumn = fields[this.board.fields.columnField.referenceName];
-        this.boardRow = fields[this.board.fields.rowField.referenceName];
-        this.boardDoing = fields[this.board.fields.doneField.referenceName];
+    private updateFields(): void {
+        this.boardColumn = this.workItem.fields[this.board.fields.columnField.referenceName];
+        this.boardRow = this.workItem.fields[this.board.fields.rowField.referenceName];
+        this.boardDoing = this.workItem.fields[this.board.fields.doneField.referenceName];
     }
     public save(field: "columnField" | "rowField", val: string): IPromise<void>;
     public save(field: "doneField", val: boolean): IPromise<void>;
@@ -93,9 +105,10 @@ export class BoardModel {
                 value: val
             });
         }
-        return getWITClient().updateWorkItem(patchDocument, this.id).then(
+        return getWITClient().updateWorkItem(patchDocument, this.id).then<void>(
             (workItem) => {
-                this.updateFields(workItem.fields);
+                this.workItem = workItem;
+                this.updateFields();
                 return void 0;
             }
         );

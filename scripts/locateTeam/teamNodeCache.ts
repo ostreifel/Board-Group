@@ -89,6 +89,6 @@ export function rebuildCache(projectId: string): IPromise<ITeamNode> {
  */
 export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
     return readNode(projectId).then(node => node || rebuildCache(projectId)).then((node: ITeamNode) => 
-        getTeamsForAreaPath(projectId, node)
+        getTeamsForAreaPath(areaPath, node)
     );
 }
