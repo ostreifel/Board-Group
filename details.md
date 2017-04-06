@@ -31,6 +31,7 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+(04/05/17) 2.3.1 Show board even when not in team context  
 (01/26/17) 2.2.6 Refresh WI on board field change  
 (01/24/17) 2.2.3 Github link  
 (12/17/16) 2.2.1 Adds context menu to board  
