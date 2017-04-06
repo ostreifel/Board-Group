@@ -1,6 +1,6 @@
 import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { Board } from "TFS/Work/Contracts";
-import { getWITClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
+import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");

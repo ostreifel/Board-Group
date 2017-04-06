@@ -26,7 +26,7 @@ export interface ITeamNode extends WorkItemClassificationNode {
 }
 
 function toTeamlessTeamNode(node: WorkItemClassificationNode): ITeamNode {
-    return { ...node, owners: [], children: node.children.map(c => toTeamlessTeamNode(c)) };
+    return { ...node, owners: [], children: (node.children || []).map(c => toTeamlessTeamNode(c)) };
 }
 
 function toPathParts(areaPath: string): string[] {
@@ -53,6 +53,7 @@ export function buildTeamNodes(areaPaths: WorkItemClassificationNode, teamAreaPa
             addTeam(teamNode, {team: teamAreaPaths.team, includeChildren: areaPath.includeChildren }, pathParts);
         }
     }
+    console.log("teamNode", teamNode);
     return teamNode;
 }
 

@@ -2,6 +2,7 @@ import { BoardControl } from "./BoardControl";
 import Controls = require("VSS/Controls");
 import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
+import {rebuildCache} from "./locateTeam/teamNodeCache";
 
 // save on ctr + s
 $(window).bind("keydown", function (event: JQueryEventObject) {
@@ -14,6 +15,8 @@ $(window).bind("keydown", function (event: JQueryEventObject) {
 });
 
 const boardControl = <BoardControl>Controls.BaseControl.createIn(BoardControl, $(".board-control"));
+
+rebuildCache(VSS.getWebContext().project.id);
 
 const contextData: Partial<IWorkItemNotificationListener> = {
     onSaved: (savedEventArgs) => boardControl.onSaved(savedEventArgs),

@@ -12,9 +12,9 @@ export class BoardControl extends Control<{}> {
     private boardModel: BoardModel;
 
     // ui
-    private columnInput: Combo;
-    private laneInput: Combo;
-    private doneInput: Combo;
+    private columnInput: Combo | null;
+    private laneInput: Combo | null;
+    private doneInput: Combo | null;
 
     public refresh() {
         const id = "System.Id";
@@ -52,9 +52,9 @@ export class BoardControl extends Control<{}> {
             value: this.boardModel.getColumn(),
             source: this.boardModel.getBoard().columns.map((c) => c.name),
             change: function () {
-                const box: Combo = this;
-                if (box.getSelectedIndex() > -1) {
-                    boardControl.boardModel.save("columnField", boardControl.getColumnInputValue()).then(
+                const columnValue = boardControl.getColumnInputValue();
+                if (columnValue) {
+                    boardControl.boardModel.save("columnField", columnValue).then(
                         () => {
                             boardControl.updateForBoard();
                             boardControl.refreshWI();
@@ -115,9 +115,9 @@ export class BoardControl extends Control<{}> {
                 source: this.boardModel.getBoard().rows.map((r) => r.name || "(Default Lane)"),
                 change: function () {
                     VSS.resize();
-                    const box: Combo = this;
-                    if (box.getSelectedIndex() > -1) {
-                        boardControl.boardModel.save("rowField", boardControl.getLaneInputValue()).then(
+                    const laneValue = boardControl.getLaneInputValue();
+                    if (laneValue) {
+                        boardControl.boardModel.save("rowField", laneValue).then(
                             () => {
                                 boardControl.updateForBoard();
                                 boardControl.refreshWI();
@@ -141,9 +141,9 @@ export class BoardControl extends Control<{}> {
             value: this.boardModel.getDoing() ? "True" : "False",
             source: ["True", "False"],
             change: function () {
-                const box: Combo = this;
-                if (box.getSelectedIndex() > -1) {
-                    boardControl.boardModel.save("doneField", boardControl.getDoneInputValue()).then(
+                const doneValue = boardControl.getDoneInputValue();
+                if (typeof doneValue === "boolean") {
+                    boardControl.boardModel.save("doneField", doneValue).then(
                         () => {
                             boardControl.updateForBoard();
                             boardControl.refreshWI();
@@ -179,9 +179,9 @@ export class BoardControl extends Control<{}> {
         return this.columnInput.getInputText();
     }
 
-    private getDoneInputValue(): boolean {
+    private getDoneInputValue(): boolean | null {
         if (!this.doneInput || this.doneInput.getSelectedIndex() < 0) {
-            return false;
+            return null;
         }
         return this.doneInput.getInputText() === "True";
     }

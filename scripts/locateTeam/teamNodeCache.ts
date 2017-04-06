@@ -70,7 +70,7 @@ function getAllTeamAreapaths(projectId: string) {
 }
 
 function getAreaPaths(projectId: string): IPromise<WorkItemClassificationNode> {
-    return getWITClient().getClassificationNode(projectId, TreeStructureGroup.Areas);
+    return getWITClient().getClassificationNode(projectId, TreeStructureGroup.Areas, undefined, 1000000);
 }
 
 export function rebuildCache(projectId: string): IPromise<ITeamNode> {
@@ -87,7 +87,7 @@ export function rebuildCache(projectId: string): IPromise<ITeamNode> {
  * Invalidate cache if areapath is unkown.
  * @param areaPath 
  */
-export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<string[]> {
+export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
     return readNode(projectId).then(node => node || rebuildCache(projectId)).then((node: ITeamNode) => 
         getTeamsForAreaPath(projectId, node)
     );
