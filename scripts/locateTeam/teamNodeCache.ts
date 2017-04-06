@@ -1,11 +1,11 @@
 import * as Q from "q";
-import {getClient as getWorkClient} from "TFS/Work/RestClient";
-import {getClient as getCoreClient} from "TFS/Core/RestClient";
-import {WebApiTeam, TeamContext} from "TFS/Core/Contracts";
-import {getClient as getWITClient} from "TFS/WorkItemTracking/RestClient";
-import {TreeStructureGroup, WorkItemClassificationNode} from "TFS/WorkItemTracking/Contracts";
-import {ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath} from "./teamNode";
-import {storeNode, readNode} from "./teamNodeStorage";
+import { getClient as getWorkClient } from "TFS/Work/RestClient";
+import { getClient as getCoreClient } from "TFS/Core/RestClient";
+import { WebApiTeam, TeamContext } from "TFS/Core/Contracts";
+import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
+import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTracking/Contracts";
+import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath } from "./teamNode";
+import { storeNode, readNode } from "./teamNodeStorage";
 
 
 function getTeams(projectId: string): IPromise<ITeam[]> {
@@ -16,11 +16,13 @@ function getTeams(projectId: string): IPromise<ITeam[]> {
 
     let getTeamDelegate = (project: string, skip: number) => {
         client.getTeams(project, top, skip).then((items: WebApiTeam[]) => {
-            teams.push(...items.map(i => {return {
-                name: i.name,
-                id: i.id,
-                description: i.description
-            }; }));
+            teams.push(...items.map(i => {
+                return {
+                    name: i.name,
+                    id: i.id,
+                    description: i.description
+                };
+            }));
             if (items.length === top) {
                 getTeamDelegate(project, skip + top);
             }
@@ -34,27 +36,27 @@ function getTeams(projectId: string): IPromise<ITeam[]> {
 }
 
 function getTeamAreaPaths(projectId: string, team: ITeam): IPromise<ITeamAreaPaths> {
-        let teamContext: TeamContext = {
-            project: "",
-            projectId: projectId,
-            team: team.name,
-            teamId: team.id
-        };
-    
-        return getWorkClient().getTeamFieldValues(teamContext).then((fieldValues) => {
-            if (fieldValues.field.referenceName === "System.AreaPath") {
-                return {
-                    team,
-                    areaPaths: fieldValues.values
-                };
-            }
-            else {
-                return {
-                    team,
-                    areaPaths: []
-                };
-            }
-        });
+    let teamContext: TeamContext = {
+        project: "",
+        projectId: projectId,
+        team: team.name,
+        teamId: team.id
+    };
+
+    return getWorkClient().getTeamFieldValues(teamContext).then((fieldValues) => {
+        if (fieldValues.field.referenceName === "System.AreaPath") {
+            return {
+                team,
+                areaPaths: fieldValues.values
+            };
+        }
+        else {
+            return {
+                team,
+                areaPaths: []
+            };
+        }
+    });
 }
 
 /**
@@ -62,7 +64,7 @@ function getTeamAreaPaths(projectId: string, team: ITeam): IPromise<ITeamAreaPat
  * @param projectId 
  */
 function getAllTeamAreapaths(projectId: string) {
-    return getTeams(projectId).then(teams => 
+    return getTeams(projectId).then(teams =>
         Q.all(teams.map(team =>
             getTeamAreaPaths(projectId, team)
         ))
@@ -88,7 +90,7 @@ export function rebuildCache(projectId: string): IPromise<ITeamNode> {
  * @param areaPath 
  */
 export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
-    return readNode(projectId).then(node => node || rebuildCache(projectId)).then((node: ITeamNode) => 
+    return readNode(projectId).then(node => node || rebuildCache(projectId)).then((node: ITeamNode) =>
         getTeamsForAreaPath(areaPath, node)
     );
 }
