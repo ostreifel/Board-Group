@@ -17,6 +17,7 @@
         "scripts/BoardControl.ts",
         "scripts/boardGroup.ts",
         "scripts/BoardModel.ts",
+        "scripts/events.ts",
         "scripts/locateTeam/teamNode.ts",
         "scripts/locateTeam/teamNodeCache.ts",
         "scripts/locateTeam/teamNodeStorage.ts",

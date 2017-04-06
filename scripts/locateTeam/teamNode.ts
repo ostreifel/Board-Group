@@ -57,11 +57,21 @@ export function buildTeamNodes(areaPaths: WorkItemClassificationNode, teamAreaPa
     return teamNode;
 }
 
+export class PathNotFound extends Error {
+    constructor(message?: string) {
+        super(message);
+        this.name = "PathNotFound";
+    }
+}
+
 export function getTeamsForAreaPath(areaPath: string, teamNode: ITeamNode): ITeam[] {
     const teams: ITeam[] = [];
     const pathParts = toPathParts(areaPath);
     while (pathParts.length > 0) {
-        pathParts.shift();
+        const currPart = pathParts.shift();
+        if (!teamNode || currPart !== teamNode.name) {
+            throw new PathNotFound(currPart);
+        }
         for (let ownership of teamNode.owners) {
             if (pathParts.length === 0 || ownership.includeChildren) {
                 teams.push(ownership.team);

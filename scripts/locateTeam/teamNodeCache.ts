@@ -4,8 +4,9 @@ import { getClient as getCoreClient } from "TFS/Core/RestClient";
 import { WebApiTeam, TeamContext } from "TFS/Core/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTracking/Contracts";
-import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath } from "./teamNode";
+import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath, PathNotFound } from "./teamNode";
 import { storeNode, readNode } from "./teamNodeStorage";
+import { trackEvent } from "../events";
 
 
 function getTeams(projectId: string): IPromise<ITeam[]> {
@@ -75,9 +76,10 @@ function getAreaPaths(projectId: string): IPromise<WorkItemClassificationNode> {
     return getWITClient().getClassificationNode(projectId, TreeStructureGroup.Areas, undefined, 1000000);
 }
 
-export function rebuildCache(projectId: string): IPromise<ITeamNode> {
+export function rebuildCache(projectId: string, trigger: string): IPromise<ITeamNode> {
     return Q.all([getAreaPaths(projectId), getAllTeamAreapaths(projectId)]).then(([areaPaths, teamAreaPaths]) => {
         const node = buildTeamNodes(areaPaths, teamAreaPaths);
+        trackEvent("RebuiltCache", { trigger, size: String(JSON.stringify(node).length) });
         return storeNode(projectId, node);
     });
 }
@@ -90,7 +92,17 @@ export function rebuildCache(projectId: string): IPromise<ITeamNode> {
  * @param areaPath 
  */
 export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
-    return readNode(projectId).then(node => node || rebuildCache(projectId)).then((node: ITeamNode) =>
-        getTeamsForAreaPath(areaPath, node)
-    );
+    return readNode(projectId).then(node => node || rebuildCache(projectId, "empty")).then((node: ITeamNode) => {
+        try {
+            return getTeamsForAreaPath(areaPath, node);
+        } catch (e) {
+            if (e instanceof Error && e.name === "PathNotFound") {
+                return rebuildCache(projectId, "areapath miss").then(node => {
+                    return getTeamsForAreaPath(areaPath, node);
+                });
+            } else {
+                throw e;
+            }
+        }
+    });
 }

@@ -6,15 +6,7 @@ import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
-
-function trackEvent(name: string, properties?: {
-    [name: string]: string;
-}) {
-    if (window["appInsights"]) {
-        window["appInsights"].trackEvent(name, properties);
-        window["appInsights"].flush();
-    }
-}
+import { trackEvent } from "./events";
 
 const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
@@ -33,6 +25,7 @@ export class BoardModel {
     public getRow = () => this.boardRow;
     private boardDoing: boolean | undefined;
     public getDoing = () => Boolean(this.boardDoing);
+    public teamContext: TeamContext;
 
 
     private workItem: WorkItem;
@@ -50,15 +43,15 @@ export class BoardModel {
                     return;
                 }
                 const lastTeam = teams[teams.length - 1];
-                const teamContext: TeamContext = {
+                this.teamContext = {
                     project: wi.fields[projectField],
-                    projectId: "",
+                    projectId: wi.fields[projectField],
                     team: lastTeam.name,
                     teamId: lastTeam.id
                 };
-                return getWorkClient().getBoards(teamContext).then(
+                return getWorkClient().getBoards(this.teamContext).then(
                     (boardReferences) => {
-                        return Q.all(boardReferences.map(b => getWorkClient().getBoard(teamContext, b.id))).then(
+                        return Q.all(boardReferences.map(b => getWorkClient().getBoard(this.teamContext, b.id))).then(
                             (boards) => this.findAssociatedBoard(boards)
                         ).then(() => void 0);
                     }

@@ -66,8 +66,8 @@ export class BoardControl extends Control<{}> {
             }
         };
 
-        const projectName = VSS.getWebContext().project.name;
-        const teamName = VSS.getWebContext().team.name;
+        const projectName = this.boardModel.teamContext.project;
+        const teamName = this.boardModel.teamContext.team;
         const uri = VSS.getWebContext().host.uri;
         const boardName = this.boardModel.getBoard().name;
         const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
