@@ -27,7 +27,7 @@
         // Load main entry point for extension
         VSS.require(["build/boardContext"], function () {
             // Loading succeeded
-            appInsights.trackPageView(null, VSS.getWebContext().host.uri);
+            appInsights.trackPageView(VSS.getContribution().id, VSS.getWebContext().host.uri);
             VSS.notifyLoadSucceeded();
         });
     </script>
