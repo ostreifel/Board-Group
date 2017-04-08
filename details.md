@@ -31,7 +31,7 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
-(04/05/17) 2.3.36 Update styling  
+(04/08/17) 2.3.37 Update styling  
 Add more screenshots to details page  
 (04/05/17) 2.3.1 Show board even when not in team context  
 (01/26/17) 2.2.6 Refresh WI on board field change  
