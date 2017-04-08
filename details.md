@@ -1,16 +1,16 @@
-Adds a link to the associated board. Allows changing of the lane, column, and done column the work item is on with dropdowns.
-
-![kanban group image](img/group.png)
-
-Adds a context menu items to the kanban cards to change column and row without dragging.
-
-![kanban context menu image](img/contextMenu.png)
+Adds a link to the associated board. Allows changing of the lane, column, and done column the work item is on with dropdowns.  
+![kanban group image](img/group.png)  
+Adds a context menu items to the kanban cards to change column and row without dragging.  
+![kanban context menu image](img/contextMenu.png)  
+Be sure to enable live updates when using the context menu on the cards.
+![live updates click](img/liveupdates.png)
 
 # Configuration with on Team Services 
 
-To configure where the board group is added click on the customize option from the work item form. Then drag the group where desired or hide it.
-
-![kanban group image](img/customizeToolbar.png) 
+To configure where the board group is added click on the customize option from the work item form.  
+![customize context image](img/customizeToolbar.png)  
+Then drag the group where desired or hide it.  
+![customize form](img/customizeForm.png)
 
 # Configuration using process template
 
@@ -31,6 +31,8 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+(04/05/17) 2.3.33 Update styling  
+Add more screenshots to details page  
 (04/05/17) 2.3.1 Show board even when not in team context  
 (01/26/17) 2.2.6 Refresh WI on board field change  
 (01/24/17) 2.2.3 Github link  
