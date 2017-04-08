@@ -43,7 +43,7 @@ export class BoardControl extends Control<{}> {
     }
 
     private updateNoBoard() {
-        this._element.html("<div>No associated board for current team</div>");
+        this._element.html(`<div class="no-board-message">No associated board for current areapath</div>`);
     }
 
     private updateForBoard() {
@@ -61,8 +61,10 @@ export class BoardControl extends Control<{}> {
                         });
                 }
             },
+            
             dropOptions: {
-                maxRowCount: 5
+                maxRowCount: 5,
+                setTitleOnlyOnOverflow: true
             }
         };
 
@@ -73,25 +75,38 @@ export class BoardControl extends Control<{}> {
         const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").text(this.boardModel.getBoard().name)
+        const boardLink = $("<a/>").addClass("board-link").text(this.boardModel.getBoard().name)
             .attr({
                 href: boardUrl,
-                target: "_blank"
-            }).click(() => {
+                target: "_blank",
+                title: "Navigate to board"
+            })
+            .click(() => {
                 this.clickTiming.measure("timeToClick", false);
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
+        
 
-        this._element.append(boardLink).append($("<br><br>"));
+        this._element.append(boardLink);
         if (this.boardModel.getColumn()) {
-            this._element.append($("<label/>").addClass("workitemcontrol-label").text("Board Column"));
+            this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
+            this.columnInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
+                if (args.isDropVisible) {
+                    const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
+                    const height = Math.max(150, 16 + 18 + 18 + 23 * itemsShown);
+                    VSS.resize(window.innerWidth, height);
+                } else {
+                    VSS.resize(window.innerWidth, 150);
+                }
+            });
+            this.columnInput["_updateTooltip"] = () => {};
         } else {
             this.columnInput = null;
         }
         this._element.append(`<div class="lane-input" />`);
         this._element.append(`<div class="done-input" />`);
-        this._element.append("<div>Board changes are saved immediately.</div>");
+        this._element.append(`<div class="disclaimer">Board changes are saved immediately.</div>`);
         this.updateLaneInput();
         this.updateDoneInput();
     }
@@ -117,7 +132,6 @@ export class BoardControl extends Control<{}> {
                 value: this.boardModel.getRow() || "(Default Lane)",
                 source: this.boardModel.getBoard().rows.map((r) => r.name || "(Default Lane)"),
                 change: function () {
-                    VSS.resize();
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
                         boardControl.boardModel.save("rowField", laneValue).then(
@@ -128,10 +142,11 @@ export class BoardControl extends Control<{}> {
                     }
                 },
                 dropOptions: {
-                    maxRowCount: 5
+                    maxRowCount: 5,
+                    setTitleOnlyOnOverflow: true
                 }
             };
-            laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Board Lane"));
+            laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
         } else {
             this.laneInput = null;
@@ -152,6 +167,9 @@ export class BoardControl extends Control<{}> {
                             boardControl.refreshWI();
                         });
                 }
+            },
+            dropOptions: {
+                setTitleOnlyOnOverflow: true,
             }
         };
         const columnValue = this.getColumnInputValue();

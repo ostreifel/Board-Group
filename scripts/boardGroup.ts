@@ -2,7 +2,6 @@ import { BoardControl } from "./BoardControl";
 import Controls = require("VSS/Controls");
 import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import {rebuildCache} from "./locateTeam/teamNodeCache";
 
 // save on ctr + s
 $(window).bind("keydown", function (event: JQueryEventObject) {
