@@ -94,10 +94,10 @@ export class BoardControl extends Control<{}> {
             this.columnInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
-                    const height = Math.max(150, 16 + 18 + 18 + 23 * itemsShown);
+                    const height = Math.max(165, 16 + 16 + 20 + 23 * itemsShown);
                     VSS.resize(window.innerWidth, height);
                 } else {
-                    VSS.resize(window.innerWidth, 150);
+                    VSS.resize(window.innerWidth, 165);
                 }
             });
             this.columnInput["_updateTooltip"] = () => {};
@@ -148,6 +148,15 @@ export class BoardControl extends Control<{}> {
             };
             laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
+            this.laneInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
+                if (args.isDropVisible) {
+                    const itemsShown = Math.min(5, this.boardModel.getBoard().rows.length);
+                    const height = Math.max(165, 16 + 16 + 20 + 16 + 20 + 23 * itemsShown);
+                    VSS.resize(window.innerWidth, height);
+                } else {
+                    VSS.resize(window.innerWidth, 165);
+                }
+            });
         } else {
             this.laneInput = null;
         }
