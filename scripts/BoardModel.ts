@@ -33,6 +33,7 @@ export class BoardModel {
 
     private teams: ITeam[];
     private refreshTimings: Timings;
+    private fieldTimings: Timings = new Timings();
 
     private workItem: WorkItem;
     private workItemType: string;
@@ -112,7 +113,8 @@ export class BoardModel {
             console.warn(`Save called on ${field} with ${val} when board not set`);
             return Q(null).then(() => void 0);
         }
-        trackEvent("UpdateBoardField", { field, location: this.location });
+        this.fieldTimings.measure("timeToClick", false);
+        trackEvent("UpdateBoardField", { field, location: this.location }, this.fieldTimings.measurements);
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{

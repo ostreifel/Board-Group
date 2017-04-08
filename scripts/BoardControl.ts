@@ -4,11 +4,14 @@ import { BoardColumnType } from "TFS/Work/Contracts";
 import { IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import { BoardModel } from "./BoardModel";
+import { trackEvent } from "./events";
+import { Timings } from "./timings";
 
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
     private boardModel: BoardModel;
+    private clickTiming: Timings = new Timings();
 
     // ui
     private columnInput: Combo | null;
@@ -73,7 +76,10 @@ export class BoardControl extends Control<{}> {
         const boardLink = $("<a/>").text(this.boardModel.getBoard().name)
             .attr({
                 href: boardUrl,
-                target: "_parent"
+                target: "_blank"
+            }).click(() => {
+                this.clickTiming.measure("timeToClick", false);
+                trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
 
         this._element.append(boardLink).append($("<br><br>"));
