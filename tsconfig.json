@@ -21,6 +21,7 @@
         "scripts/locateTeam/teamNode.ts",
         "scripts/locateTeam/teamNodeCache.ts",
         "scripts/locateTeam/teamNodeStorage.ts",
+        "scripts/timings.ts",
         "typings/index.d.ts"
     ]
 }

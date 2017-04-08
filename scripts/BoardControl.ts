@@ -8,7 +8,6 @@ import { BoardModel } from "./BoardModel";
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
-    private workItemType: string;
     private boardModel: BoardModel;
 
     // ui
@@ -18,11 +17,9 @@ export class BoardControl extends Control<{}> {
 
     public refresh() {
         const id = "System.Id";
-        const wit = "System.WorkItemType";
         WorkItemFormService.getService().then(service => {
-            service.getFieldValues([id, wit]).then(fields => {
+            service.getFieldValues([id]).then(fields => {
                 this.wiId = fields[id] as number;
-                this.workItemType = fields[wit] as string;
                 const refreshUI = () => {
                     if (this.boardModel.getColumn()) {
                         this.updateForBoard();

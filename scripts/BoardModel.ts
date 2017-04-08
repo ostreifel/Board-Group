@@ -5,12 +5,16 @@ import { WorkItem } from "TFS/WorkItemTracking/Contracts";
 import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
+import { ITeam } from "./locateTeam/teamNode";
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
+import { Timings } from "./timings";
 
 const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
 const areaPathField = "System.AreaPath";
+
+let firstRefresh = true;
 export class BoardModel {
     public static create(id: number, location: string): IPromise<BoardModel> {
         const boardModel = new BoardModel(id, location);
@@ -27,19 +31,39 @@ export class BoardModel {
     public getDoing = () => Boolean(this.boardDoing);
     public teamContext: TeamContext;
 
+    private teams: ITeam[];
+    private refreshTimings: Timings;
 
     private workItem: WorkItem;
     private workItemType: string;
     private constructor(readonly id: number, readonly location) { }
 
+    private completedRefresh() {
+        this.refreshTimings.measure("totalTime", false);
+        trackEvent("boardRefresh", {
+            location: this.location,
+            teamCount: String(this.teams.length),
+            foundBoard: String(!!this.board),
+            wiHasBoardData: String(!!this.boardColumn),
+            host: VSS.getWebContext().host.authority,
+            firstRefresh: String(firstRefresh)
+        }, this.refreshTimings.measurements);
+        firstRefresh = false;
+    }
+
     public refresh(): IPromise<void> {
+        this.refreshTimings = new Timings();
         delete this.board;
         this.boardColumn = this.boardRow = this.boardDoing = undefined;
         return getWITClient().getWorkItem(this.id).then(wi => {
+            this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.workItemType = wi.fields[witField];
             return getTeamsForAreaPathFromCache(wi.fields[projectField], wi.fields[areaPathField]).then(teams => {
+                this.refreshTimings.measure("cacheRead");
+                this.teams = teams;
                 if (teams.length === 0) {
+                    this.completedRefresh();
                     return;
                 }
                 const lastTeam = teams[teams.length - 1];
@@ -51,6 +75,7 @@ export class BoardModel {
                 };
                 return getWorkClient().getBoards(this.teamContext).then(
                     (boardReferences) => {
+                        this.refreshTimings.measure("teamBoards");
                         return Q.all(boardReferences.map(b => getWorkClient().getBoard(this.teamContext, b.id))).then(
                             (boards) => this.findAssociatedBoard(boards)
                         ).then(() => void 0);
@@ -61,6 +86,7 @@ export class BoardModel {
     }
 
     private findAssociatedBoard(boards: Board[]): void {
+        this.refreshTimings.measure("getAllBoards");
         const matchingBoards = boards.filter(b => {
             for (let key in b.allowedMappings) {
                 return this.workItemType in b.allowedMappings[key];
@@ -68,9 +94,11 @@ export class BoardModel {
         });
         this.board = matchingBoards[0];
         if (!this.board) {
+            this.completedRefresh();
             return;
         }
         this.updateFields();
+        this.completedRefresh();
     }
     private updateFields(): void {
         this.boardColumn = this.workItem.fields[this.board.fields.columnField.referenceName];
