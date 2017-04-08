@@ -75,7 +75,7 @@ export class BoardControl extends Control<{}> {
         const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").addClass("board-link").text(this.boardModel.getBoard().name)
+        const boardLink = $("<a/>").addClass("board-link bowtie-icon").text(this.boardModel.getBoard().name)
             .attr({
                 href: boardUrl,
                 target: "_blank",
