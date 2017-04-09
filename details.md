@@ -31,6 +31,7 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+(04/08/17) 2.3.51 Info callout  
 (04/08/17) 2.3.37 Update styling  
 Add more screenshots to details page  
 (04/05/17) 2.3.1 Show board even when not in team context  

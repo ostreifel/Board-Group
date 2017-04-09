@@ -65,7 +65,8 @@ export class BoardControl extends Control<{}> {
             dropOptions: {
                 maxRowCount: 5,
                 setTitleOnlyOnOverflow: true
-            }
+            },
+            blur: () => this.columnInput && !this.columnInput.isDropVisible() && VSS.resize(window.innerWidth, 165)
         };
 
         const projectName = this.boardModel.teamContext.project;
@@ -75,18 +76,17 @@ export class BoardControl extends Control<{}> {
         const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").addClass("board-link bowtie-icon").text(this.boardModel.getBoard().name)
+        const boardLink = $("<a/>").addClass("board-link").text(this.boardModel.getBoard().name)
             .attr({
                 href: boardUrl,
                 target: "_blank",
                 title: "Navigate to board"
             })
+            .append(`<span class="bowtie-icon bowtie-link"></span>`)
             .click(() => {
                 this.clickTiming.measure("timeToClick", false);
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
-        
-
         this._element.append(boardLink);
         if (this.boardModel.getColumn()) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
@@ -94,7 +94,7 @@ export class BoardControl extends Control<{}> {
             this.columnInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
-                    const height = Math.max(165, 16 + 16 + 20 + 23 * itemsShown);
+                    const height = Math.max(165, 16 + 16 + 20 + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
                     VSS.resize(window.innerWidth, 165);
@@ -144,14 +144,15 @@ export class BoardControl extends Control<{}> {
                 dropOptions: {
                     maxRowCount: 5,
                     setTitleOnlyOnOverflow: true
-                }
+                },
+                blur: () => this.laneInput && !this.laneInput.isDropVisible() && VSS.resize(window.innerWidth, 165)
             };
             laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
             this.laneInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().rows.length);
-                    const height = Math.max(165, 16 + 16 + 20 + 16 + 20 + 23 * itemsShown);
+                    const height = Math.max(165, 16 + 16 + 20 + 16 + 20 + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
                     VSS.resize(window.innerWidth, 165);
