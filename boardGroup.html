@@ -27,7 +27,7 @@
         label {
             display: block;
         }
-        .board-info:not(:hover) .board-callout {
+        .board-info:not(:hover):not(:focus) .board-callout {
             visibility: hidden;
         }
         .bowtie-link {
@@ -47,12 +47,13 @@
             width: 350px;
             margin-left: -100px;
             background-color: white;
+            padding: 8px;
         }
 
     </style>
 </head>
 <body>
-    <span class="bowtie-icon bowtie-status-info board-info">
+    <span class="bowtie-icon bowtie-status-info board-info" tabindex="0">
             <div class="board-callout">
                 <div>Thank you for using the Board Group Extension!</div>
                 <a href="https://marketplace.visualstudio.com/items?itemName=ottostreifel.board-group" target="_blank">Write a review</a> |
