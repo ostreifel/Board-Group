@@ -47,7 +47,8 @@ export class BoardModel {
             foundBoard: String(!!this.board),
             wiHasBoardData: String(!!this.boardColumn),
             host: VSS.getWebContext().host.authority,
-            firstRefresh: String(firstRefresh)
+            firstRefresh: String(firstRefresh),
+            boardDatasOnWi: String(Object.keys(this.workItem.fields).filter(f => f.match("_Kanban.Column$")).length)
         }, this.refreshTimings.measurements);
         firstRefresh = false;
     }
