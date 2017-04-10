@@ -61,12 +61,21 @@ export class BoardControl extends Control<{}> {
                         });
                 }
             },
-            
+
             dropOptions: {
                 maxRowCount: 5,
                 setTitleOnlyOnOverflow: true
             },
-            blur: () => this.columnInput && !this.columnInput.isDropVisible() && VSS.resize(window.innerWidth, 165)
+            blur: function (this: Combo) {
+                if (!this.isDropVisible()) {
+                    VSS.resize(window.innerWidth, 165);
+                }
+            },
+            focus: function (this: Combo) {
+                if (!this.isDropVisible()) {
+                    this.toggleDropDown();
+                }
+            }
         };
 
         const projectName = this.boardModel.teamContext.project;
@@ -91,7 +100,7 @@ export class BoardControl extends Control<{}> {
         if (this.boardModel.getColumn()) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
-            this.columnInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
+            this.columnInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
                     const height = Math.max(165, 16 + 16 + 20 + 23 * itemsShown + 5);
@@ -100,7 +109,6 @@ export class BoardControl extends Control<{}> {
                     VSS.resize(window.innerWidth, 165);
                 }
             });
-            this.columnInput["_updateTooltip"] = () => {};
         } else {
             this.columnInput = null;
         }
@@ -145,11 +153,20 @@ export class BoardControl extends Control<{}> {
                     maxRowCount: 5,
                     setTitleOnlyOnOverflow: true
                 },
-                blur: () => this.laneInput && !this.laneInput.isDropVisible() && VSS.resize(window.innerWidth, 165)
+                blur: function (this: Combo) {
+                    if (!this.isDropVisible()) {
+                        VSS.resize(window.innerWidth, 165);
+                    }
+                },
+                focus: function (this: Combo) {
+                    if (!this.isDropVisible()) {
+                        this.toggleDropDown();
+                    }
+                }
             };
             laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
-            this.laneInput._bind("dropDownToggled", (event, args: {isDropVisible: boolean}) => {
+            this.laneInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().rows.length);
                     const height = Math.max(165, 16 + 16 + 20 + 16 + 20 + 23 * itemsShown + 5);
