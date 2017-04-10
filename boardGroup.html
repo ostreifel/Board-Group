@@ -15,11 +15,15 @@
             window.appInsights=appInsights;
     </script>
     <style>
+        .board-group {
+            padding-left: 4px;
+        }
         .board-control div.combo.input-text-box.list.drop:not(:hover):not(.focus) {
             border-color: transparent;
         }
         .board-control div.combo.input-text-box.list.drop {
             width: calc(100% - 1px);
+            margin-left: -4px;
             border-color: #eaeaea;
         }
         .board-control div.combo.input-text-box.list.drop:not(:hover):not(.focus) .drop.bowtie-icon:not(.hover) {
@@ -55,10 +59,14 @@
             background-color: white;
             padding: 8px;
         }
+        .disclaimer {
+            margin-top: 10px;
+        }
 
     </style>
 </head>
 <body>
+    <div class="board-group">
     <span class="bowtie-icon bowtie-status-info board-info" tabindex="0">
             <div class="board-callout">
                 <div>Thank you for using the Board Group Extension!</div>
@@ -68,6 +76,7 @@
             </div>
     </span>
     <div class="board-control"></div>
+    </div>
     <script type="text/javascript">
         // Initialize framework 
         VSS.init({
