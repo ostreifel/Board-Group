@@ -18,8 +18,15 @@
         .board-control div.combo.input-text-box.list.drop:not(:hover):not(.focus) {
             border-color: transparent;
         }
+        .board-control div.combo.input-text-box.list.drop {
+            width: calc(100% - 1px);
+            border-color: #eaeaea;
+        }
         .board-control div.combo.input-text-box.list.drop:not(:hover):not(.focus) .drop.bowtie-icon:not(.hover) {
             visibility: hidden;
+        }
+        .board-control div.combo.input-text-box.list input {
+            font-size: 14px;
         }
         label {
             display: block;
