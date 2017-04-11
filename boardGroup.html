@@ -87,8 +87,6 @@
         
         // Load main entry point for extension
         VSS.require(["build/boardGroup"], function () {
-            // Loading succeeded
-            appInsights.trackPageView("form", VSS.getWebContext().host.uri);
             VSS.notifyLoadSucceeded();
         });
     </script>

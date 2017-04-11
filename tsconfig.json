@@ -13,10 +13,12 @@
         "./typings/index.d.ts"
     ],
     "files": [
+        "scripts/boardCache.ts",
         "scripts/boardContext.ts",
         "scripts/BoardControl.ts",
         "scripts/boardGroup.ts",
         "scripts/BoardModel.ts",
+        "scripts/CachedValue.ts",
         "scripts/events.ts",
         "scripts/locateTeam/teamNode.ts",
         "scripts/locateTeam/teamNodeCache.ts",

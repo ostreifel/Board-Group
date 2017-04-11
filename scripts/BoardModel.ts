@@ -1,4 +1,4 @@
-import { getClient as getWorkClient } from "TFS/Work/RestClient";
+import { getBoard, getBoardReferences } from "./boardCache";
 import { Board } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { WorkItem } from "TFS/WorkItemTracking/Contracts";
@@ -6,7 +6,7 @@ import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
 import { ITeam } from "./locateTeam/teamNode";
-import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
+import { getTeamsForAreaPathFromCache, getTeamNode } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 
@@ -29,7 +29,8 @@ export class BoardModel {
     public getRow = () => this.boardRow;
     private boardDoing: boolean | undefined;
     public getDoing = () => Boolean(this.boardDoing);
-    public teamContext: TeamContext;
+    public projectName: string;
+    public teamName: string;
 
     private teams: ITeam[];
     private refreshTimings: Timings;
@@ -69,16 +70,12 @@ export class BoardModel {
                     return;
                 }
                 const lastTeam = teams[teams.length - 1];
-                this.teamContext = {
-                    project: wi.fields[projectField],
-                    projectId: wi.fields[projectField],
-                    team: lastTeam.name,
-                    teamId: lastTeam.id
-                };
-                return getWorkClient().getBoards(this.teamContext).then(
+                this.projectName = wi.fields[projectField];
+                this.teamName = lastTeam.name;
+                return getBoardReferences(this.projectName, this.teamName).then(
                     (boardReferences) => {
                         this.refreshTimings.measure("teamBoards");
-                        return Q.all(boardReferences.map(b => getWorkClient().getBoard(this.teamContext, b.id))).then(
+                        return Q.all(boardReferences.map(b => getBoard(this.projectName, this.teamName, b.id))).then(
                             (boards) => this.findAssociatedBoard(boards)
                         ).then(() => void 0);
                     }

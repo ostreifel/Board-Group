@@ -26,8 +26,6 @@
         
         // Load main entry point for extension
         VSS.require(["build/boardContext"], function () {
-            // Loading succeeded
-            appInsights.trackPageView("card", VSS.getWebContext().host.uri);
             VSS.notifyLoadSucceeded();
         });
     </script>

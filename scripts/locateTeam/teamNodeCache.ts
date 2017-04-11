@@ -7,6 +7,7 @@ import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTrac
 import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath, PathNotFound } from "./teamNode";
 import { storeNode, readNode } from "./teamNodeStorage";
 import { trackEvent } from "../events";
+import { CachedValue } from "../cachedValue";
 
 
 function getTeams(projectId: string): IPromise<ITeam[]> {
@@ -77,11 +78,23 @@ function getAreaPaths(projectId: string): IPromise<WorkItemClassificationNode> {
 }
 
 export function rebuildCache(projectId: string, trigger: string): IPromise<ITeamNode> {
+    if (projectId in teamNodeCache && teamNodeCache[projectId].isLoaded()) {
+        delete teamNodeCache[projectId];
+    }
     return Q.all([getAreaPaths(projectId), getAllTeamAreapaths(projectId)]).then(([areaPaths, teamAreaPaths]) => {
         const node = buildTeamNodes(areaPaths, teamAreaPaths);
         trackEvent("RebuiltCache", { trigger, size: String(JSON.stringify(node).length) });
         return storeNode(projectId, node);
     });
+}
+
+// Put the values in CachedValue classes so that multiple retrievals before the promise returns only triggers one get
+const teamNodeCache: { [projectId: string]: CachedValue<ITeamNode> } = {};
+export function getTeamNode(projectId: string): IPromise<ITeamNode> {
+    if (!(projectId in teamNodeCache)) {
+        teamNodeCache[projectId] = new CachedValue<ITeamNode>(() => readNode(projectId).then(node => node || rebuildCache(projectId, "empty")));
+    }
+    return teamNodeCache[projectId].getValue();
 }
 
 /**
@@ -92,7 +105,7 @@ export function rebuildCache(projectId: string, trigger: string): IPromise<ITeam
  * @param areaPath 
  */
 export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
-    return readNode(projectId).then(node => node || rebuildCache(projectId, "empty")).then((node: ITeamNode) => {
+    return getTeamNode(projectId).then((node: ITeamNode) => {
         try {
             return getTeamsForAreaPath(areaPath, node);
         } catch (e) {
