@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@types/applicationinsights-js": "^1.0.2",
+    "@types/jquery": "^2.0.41",
     "@types/react": "^15.0.21",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",

@@ -1,3 +1,9 @@
+
+export interface ValueWithTimings<T> {
+    value: T;
+    properties: IProperties;
+    measurements: IMeasurements;
+}
 export interface IProperties {
     [name: string]: string;
 }

@@ -6,8 +6,9 @@ import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTracking/Contracts";
 import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath, PathNotFound } from "./teamNode";
 import { storeNode, readNode } from "./teamNodeStorage";
-import { trackEvent } from "../events";
+import { trackEvent, IProperties, IMeasurements, ValueWithTimings } from "../events";
 import { CachedValue } from "../cachedValue";
+import { Timings } from "../timings";
 
 
 function getTeams(projectId: string): IPromise<ITeam[]> {
@@ -66,25 +67,60 @@ function getTeamAreaPaths(projectId: string, team: ITeam): IPromise<ITeamAreaPat
  * @param projectId 
  */
 function getAllTeamAreapaths(projectId: string) {
-    return getTeams(projectId).then(teams =>
-        Q.all(teams.map(team =>
+    const timings = new Timings();
+    return getTeams(projectId).then(teams => {
+        timings.measure("teamsList");
+        return Q.all(teams.map(team =>
             getTeamAreaPaths(projectId, team)
-        ))
-    )
+        )).then(teamPaths => {
+            timings.measure("getTeamSettings");
+            const value: ValueWithTimings<ITeamAreaPaths[]> = {
+                value: teamPaths, properties: {teamCount: String(teams.length)}, measurements: timings.measurements
+            };
+            return value;
+        });
+    });
 }
 
-function getAreaPaths(projectId: string): IPromise<WorkItemClassificationNode> {
-    return getWITClient().getClassificationNode(projectId, TreeStructureGroup.Areas, undefined, 1000000);
+function getAreaPaths(projectId: string) {
+    const timings = new Timings();
+    return getWITClient().getClassificationNode(projectId, TreeStructureGroup.Areas, undefined, 1000000).then(areas => {
+        timings.measure("areaPaths");
+        const value: ValueWithTimings<WorkItemClassificationNode> = {
+            value: areas,
+            properties: {},
+            measurements: timings.measurements
+        }
+        return value;
+    });
 }
 
 export function rebuildCache(projectId: string, trigger: string): IPromise<ITeamNode> {
     if (projectId in teamNodeCache && teamNodeCache[projectId].isLoaded()) {
         delete teamNodeCache[projectId];
     }
+    const cacheTimings = new Timings();
     return Q.all([getAreaPaths(projectId), getAllTeamAreapaths(projectId)]).then(([areaPaths, teamAreaPaths]) => {
-        const node = buildTeamNodes(areaPaths, teamAreaPaths);
-        trackEvent("RebuiltCache", { trigger, size: String(JSON.stringify(node).length) });
-        return storeNode(projectId, node);
+        cacheTimings.measure("restCalls", false);
+        const node = buildTeamNodes(areaPaths.value, teamAreaPaths.value);
+        cacheTimings.measure("buildTeamNodes");
+        return storeNode(projectId, node).then(node => {
+            cacheTimings.measure("storeNode");
+            cacheTimings.measure("totalTime", false);
+            trackEvent("RebuiltCache",
+                { 
+                    ...areaPaths.properties,
+                    ...teamAreaPaths.properties,
+                    trigger,
+                    size: String(JSON.stringify(node).length)
+                },
+                {
+                    ...areaPaths.measurements,
+                    ...teamAreaPaths.measurements,
+                    ...cacheTimings.measurements
+                }
+            );
+        });
     });
 }
 
