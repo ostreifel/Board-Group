@@ -54,8 +54,19 @@ export class BoardModel {
         firstRefresh = false;
     }
 
+    private createRefreshTimings() {
+        const windowStart = window["start"];
+        if (firstRefresh && typeof windowStart === "number") {
+            const timings = new Timings(windowStart);
+            timings.measure("startRefresh");
+            return timings;
+        } else {
+            return new Timings();
+        }
+    }
+
     public refresh(): IPromise<void> {
-        this.refreshTimings = new Timings();
+        this.refreshTimings = this.createRefreshTimings();
         delete this.board;
         this.boardColumn = this.boardRow = this.boardDoing = undefined;
         return getWITClient().getWorkItem(this.id).then(wi => {

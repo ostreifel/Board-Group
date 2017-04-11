@@ -1,29 +1,12 @@
 {
     "compilerOptions": {
         "module": "amd",
-        "sourceMap": false,
-        "rootDir": "./scripts",
+        "moduleResolution": "node",
         "target": "es5",
+        "noImplicitAny": false,
         "jsx": "react",
-        "strictNullChecks": true
-    },
-    "filesGlob": [
-        "./scripts/**/*.ts",
-        "!**/*.tests.ts",
-        "./typings/index.d.ts"
-    ],
-    "files": [
-        "scripts/boardCache.ts",
-        "scripts/boardContext.ts",
-        "scripts/BoardControl.ts",
-        "scripts/boardGroup.ts",
-        "scripts/BoardModel.ts",
-        "scripts/CachedValue.ts",
-        "scripts/events.ts",
-        "scripts/locateTeam/teamNode.ts",
-        "scripts/locateTeam/teamNodeCache.ts",
-        "scripts/locateTeam/teamNodeStorage.ts",
-        "scripts/timings.ts",
-        "typings/index.d.ts"
-    ]
+        "sourceMap": false,
+        "baseUrl": ".",
+        "rootDir": "./scripts"
+    }
 }

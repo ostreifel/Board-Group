@@ -3,5 +3,5 @@ node_modules
 scripts/*.js
 typings
 dist
-build
+js
 test
