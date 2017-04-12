@@ -44,7 +44,7 @@ export class BoardControl extends Control<{}> {
     }
 
     private updateNoBoard() {
-        this._element.html(`<div class="no-board-message">No associated board for current areapath</div>`);
+        this._element.html(`<div class="no-board-message">No board found for the current area path</div>`);
     }
 
     private updateForBoard() {
