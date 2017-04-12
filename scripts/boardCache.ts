@@ -1,6 +1,6 @@
 import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { BoardReference, Board } from "TFS/Work/Contracts";
-import { CachedValue } from "./CachedValue";
+import { CachedValue } from "./cachedValue";
 
 const boardReferences: {[projectTeam: string]: CachedValue<BoardReference[]>} = {};
 export function getBoardReferences(projectName: string, teamName: string) {

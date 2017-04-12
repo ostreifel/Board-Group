@@ -1,4 +1,4 @@
-import { BoardModel } from './BoardModel';
+import { BoardModel } from './boardModel';
 import { BoardColumnType } from "TFS/Work/Contracts";
 
 function menuItemsFromBoard(boardModel: BoardModel): IContributedMenuItem[] {

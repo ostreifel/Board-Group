@@ -3,10 +3,11 @@ import { Combo, IComboOptions } from "VSS/Controls/Combos";
 import { BoardColumnType } from "TFS/Work/Contracts";
 import { IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { BoardModel } from "./BoardModel";
+import { BoardModel } from "./boardModel";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 
+const startHeight = 175;
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
@@ -68,7 +69,7 @@ export class BoardControl extends Control<{}> {
             },
             blur: function (this: Combo) {
                 if (!this.isDropVisible()) {
-                    VSS.resize(window.innerWidth, 165);
+                    VSS.resize(window.innerWidth, startHeight);
                 }
             },
             focus: function (this: Combo) {
@@ -103,10 +104,11 @@ export class BoardControl extends Control<{}> {
             this.columnInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
-                    const height = Math.max(165, 16 + 16 + 20 + 23 * itemsShown + 5);
+                    const above = this.columnInput._element.position().top + this.columnInput._element.height();
+                    const height = Math.max(startHeight, above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
-                    VSS.resize(window.innerWidth, 165);
+                    VSS.resize(window.innerWidth, startHeight);
                 }
             });
         } else {
@@ -155,7 +157,7 @@ export class BoardControl extends Control<{}> {
                 },
                 blur: function (this: Combo) {
                     if (!this.isDropVisible()) {
-                        VSS.resize(window.innerWidth, 165);
+                        VSS.resize(window.innerWidth, startHeight);
                     }
                 },
                 focus: function (this: Combo) {
@@ -166,13 +168,14 @@ export class BoardControl extends Control<{}> {
             };
             laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
-            this.laneInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
-                if (args.isDropVisible) {
+            this.laneInput._bind("dropDownToggled focus", (event, args: { isDropVisible: boolean }) => {
+                if (this.laneInput.isDropVisible()) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard().rows.length);
-                    const height = Math.max(165, 16 + 16 + 20 + 16 + 20 + 23 * itemsShown + 5);
+                    const above = this.laneInput._element.position().top + this.laneInput._element.height();
+                    const height = Math.max(startHeight, above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
-                    VSS.resize(window.innerWidth, 165);
+                    VSS.resize(window.innerWidth, startHeight);
                 }
             });
         } else {

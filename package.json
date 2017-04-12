@@ -11,7 +11,6 @@
     "gulp-webpack": "^1.5.0",
     "react": "^15.4.0",
     "react-dom": "^15.4.0",
-    "requirejs": "^2.2.0",
     "typescript": "^2.0.10",
     "typings": "^1.0.4",
     "vss-web-extension-sdk": "^2.109.1",

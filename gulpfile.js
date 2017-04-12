@@ -32,10 +32,8 @@ gulp.task('build', [/*'fix-vss',*/ 'clean'], () => {
     //     .pipe(sass())
     //     .pipe(gulp.dest(`${contentFolder}/css`));
 
-    const tsResult = gulp.src(['scripts/**/*.tsx', 'scripts/**/*.ts'])
-        .pipe(tsProject());
-
-    return tsResult.js.pipe(gulp.dest(jsFolder));
+    return tsProject.src()
+        .pipe(tsProject()).js.pipe(gulp.dest(jsFolder));
 });
 
 

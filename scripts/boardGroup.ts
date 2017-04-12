@@ -1,4 +1,4 @@
-import { BoardControl } from "./BoardControl";
+import { BoardControl } from "./boardControl";
 import Controls = require("VSS/Controls");
 import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";

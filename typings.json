@@ -1,8 +1,6 @@
 {
-  "globalDependencies": {
-    "chai": "registry:dt/chai#3.4.0+20160601211834",
-    "mocha": "registry:dt/mocha#2.2.5+20160619032855",
-    "tfs": "npm:vss-web-extension-sdk/typings/tfs.d.ts",
-    "vss": "npm:vss-web-extension-sdk/typings/vss.d.ts"
-  }
+      "globalDependencies": {
+            "tfs": "npm:vss-web-extension-sdk/typings/tfs.d.ts",
+            "vss": "npm:vss-web-extension-sdk/typings/vss.d.ts"
+      }
 }

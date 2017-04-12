@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.3.88",
+    "version": "2.3.102",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",
@@ -66,7 +66,7 @@
             "properties": {
                 "name": "Board",
                 "uri": "boardGroup.html",
-                "height": 165
+                "height": 175
             }
         },
         {

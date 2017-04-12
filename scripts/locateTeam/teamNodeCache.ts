@@ -104,9 +104,9 @@ export function rebuildCache(projectId: string, trigger: string): IPromise<ITeam
         cacheTimings.measure("restCalls", false);
         const node = buildTeamNodes(areaPaths.value, teamAreaPaths.value);
         cacheTimings.measure("buildTeamNodes");
-        return storeNode(projectId, node).then(node => {
+        cacheTimings.measure("totalTime", false);
+        storeNode(projectId, node).then(node => {
             cacheTimings.measure("storeNode");
-            cacheTimings.measure("totalTime", false);
             trackEvent("RebuiltCache",
                 { 
                     ...areaPaths.properties,
@@ -121,6 +121,7 @@ export function rebuildCache(projectId: string, trigger: string): IPromise<ITeam
                 }
             );
         });
+        return node;
     });
 }
 

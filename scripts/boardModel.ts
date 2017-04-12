@@ -2,11 +2,10 @@ import { getBoard, getBoardReferences } from "./boardCache";
 import { Board } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { WorkItem } from "TFS/WorkItemTracking/Contracts";
-import { TeamContext } from "TFS/Core/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
 import { ITeam } from "./locateTeam/teamNode";
-import { getTeamsForAreaPathFromCache, getTeamNode } from "./locateTeam/teamNodeCache";
+import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 

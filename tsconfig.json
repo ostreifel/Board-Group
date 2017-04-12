@@ -7,6 +7,10 @@
         "jsx": "react",
         "sourceMap": false,
         "baseUrl": ".",
-        "rootDir": "./scripts"
+        "rootDir": "./scripts",
+        "typeRoots": [
+            "./typings",
+            "./node_modules/@types"
+        ]
     }
 }
