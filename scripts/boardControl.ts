@@ -238,7 +238,9 @@ export class BoardControl extends Control<{}> {
     }
 
     public onLoaded(loadedArgs: IWorkItemLoadedArgs) {
-        if (!loadedArgs.isNew) {
+        if (loadedArgs.isNew) {
+            this._element.html(`<div class="new-wi-message">Save the work item to see board data</div>`);
+        } else {
             this.wiId = loadedArgs.id;
             this._element.html("");
             this._element.append($("<div/>").text("Looking for associated board..."));
