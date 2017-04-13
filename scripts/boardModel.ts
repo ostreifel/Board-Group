@@ -1,5 +1,5 @@
 import { getBoard, getBoardReferences } from "./boardCache";
-import { Board } from "TFS/Work/Contracts";
+import { Board, BoardReference } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { WorkItem } from "TFS/WorkItemTracking/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
@@ -13,27 +13,31 @@ const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
 const areaPathField = "System.AreaPath";
 
+interface ITeamBoard {
+    teamName: string;
+    board?: Board;
+    haveWiData?: boolean;
+}
+
 let firstRefresh = true;
 export class BoardModel {
     public static create(id: number, location: string): IPromise<BoardModel> {
         const boardModel = new BoardModel(id, location);
         return boardModel.refresh().then(() => boardModel);
     }
-    // TODO make Board | null;
-    private board: Board;
-    public getBoard = () => this.board;
-    private boardColumn: string | undefined;
-    public getColumn = () => this.boardColumn;
-    private boardRow: string | undefined;
-    public getRow = () => this.boardRow;
-    private boardDoing: boolean | undefined;
-    public getDoing = () => Boolean(this.boardDoing);
+    public getBoard = () => this.boards.length === 0 ? undefined : this.boards[this.boards.length - 1].board;
+    public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
+    public getRow = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.rowField.referenceName];
+    public getDoing = () => this.getBoard() && Boolean(this.workItem.fields[this.getBoard().fields.doneField.referenceName]);
+    public getTeamName = () => this.getBoard() && this.getBoard().name;
     public projectName: string;
-    public teamName: string;
 
+    private boards: ITeamBoard[];
     private teams: ITeam[];
+    private foundBoard: boolean;
     private refreshTimings: Timings;
     private fieldTimings: Timings = new Timings();
+    private teamName: string;
 
     private workItem: WorkItem;
     private workItemType: string;
@@ -44,8 +48,9 @@ export class BoardModel {
         trackEvent("boardRefresh", {
             location: this.location,
             teamCount: String(this.teams.length),
-            foundBoard: String(!!this.board),
-            wiHasBoardData: String(!!this.boardColumn),
+            foundBoard: String(!!this.getBoard()),
+            matchingBoards: String(this.boards.length),
+            wiHasBoardData: String(!!this.getColumn()),
             host: VSS.getWebContext().host.authority,
             firstRefresh: String(firstRefresh),
             boardDatasOnWi: String(Object.keys(this.workItem.fields).filter(f => f.match("_Kanban.Column$")).length)
@@ -66,8 +71,7 @@ export class BoardModel {
 
     public refresh(): IPromise<void> {
         this.refreshTimings = this.createRefreshTimings();
-        delete this.board;
-        this.boardColumn = this.boardRow = this.boardDoing = undefined;
+        this.boards = [];
         return getWITClient().getWorkItem(this.id).then(wi => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
@@ -81,65 +85,61 @@ export class BoardModel {
                 }
                 const lastTeam = teams[teams.length - 1];
                 this.projectName = wi.fields[projectField];
-                this.teamName = lastTeam.name;
-                return getBoardReferences(this.projectName, this.teamName).then(
-                    (boardReferences) => {
-                        this.refreshTimings.measure("teamBoards");
-                        return Q.all(boardReferences.map(b => getBoard(this.projectName, this.teamName, b.id))).then(
-                            (boards) => this.findAssociatedBoard(boards)
-                        ).then(() => void 0);
+                return Q.all(teams.map(t => getBoardReferences(this.projectName, t.name).then(
+                    references => {
+                        return Q.all(references.map(r => getBoard(this.projectName, t.name, r.id))).then(boards => {
+                            return this.findAssociatedBoard(t.name, boards);
+                        })
                     }
-                );
+                ))).then(teamBoards => {
+                    this.refreshTimings.measure("getAllBoards");
+                    
+                    const matchingBoards = teamBoards.filter(t => t.board);
+                    this.foundBoard = matchingBoards.length > 0;
+                    this.boards = teamBoards.filter(t => t.haveWiData);
+                    this.completedRefresh();
+                });
             });
         });
     }
 
-    private findAssociatedBoard(boards: Board[]): void {
-        this.refreshTimings.measure("getAllBoards");
-        const matchingBoards = boards.filter(b => {
+    private findAssociatedBoard(teamName: string, boards: Board[]): ITeamBoard {
+        const [board] = boards.filter(b => {
             for (let key in b.allowedMappings) {
                 return this.workItemType in b.allowedMappings[key];
             }
         });
-        this.board = matchingBoards[0];
-        if (!this.board) {
-            this.completedRefresh();
-            return;
-        }
-        this.updateFields();
-        this.completedRefresh();
-    }
-    private updateFields(): void {
-        this.boardColumn = this.workItem.fields[this.board.fields.columnField.referenceName];
-        this.boardRow = this.workItem.fields[this.board.fields.rowField.referenceName];
-        this.boardDoing = this.workItem.fields[this.board.fields.doneField.referenceName];
+        return {
+            teamName,
+            board,
+            haveWiData: !!board && board.fields.columnField.referenceName in this.workItem.fields
+        };
     }
     public save(field: "columnField" | "rowField", val: string): IPromise<void>;
     public save(field: "doneField", val: boolean): IPromise<void>;
     public save(field: "columnField" | "rowField" | "doneField", val: string | boolean): IPromise<void> {
-        if (!this.board) {
+        if (!this.getBoard()) {
             console.warn(`Save called on ${field} with ${val} when board not set`);
             return Q(null).then(() => void 0);
         }
-        this.fieldTimings.measure("timeToClick", false);
+        this.fieldTimings.measure("timeToClick");
         trackEvent("UpdateBoardField", { field, location: this.location }, this.fieldTimings.measurements);
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Remove,
-                path: `/fields/${this.board.fields[field].referenceName}`
+                path: `/fields/${this.getBoard().fields[field].referenceName}`
             });
         } else {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Add,
-                path: `/fields/${this.board.fields[field].referenceName}`,
+                path: `/fields/${this.getBoard().fields[field].referenceName}`,
                 value: val
             });
         }
         return getWITClient().updateWorkItem(patchDocument, this.id).then<void>(
             (workItem) => {
                 this.workItem = workItem;
-                this.updateFields();
                 return void 0;
             }
         );
