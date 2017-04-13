@@ -29,7 +29,7 @@ export class BoardModel {
     public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
     public getRow = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.rowField.referenceName];
     public getDoing = () => this.getBoard() && Boolean(this.workItem.fields[this.getBoard().fields.doneField.referenceName]);
-    public getTeamName = () => this.getBoard() && this.getBoard().name;
+    public getTeamName = () => this.boards.length === 0 ? undefined : this.boards[this.boards.length - 1].teamName;
     public projectName: string;
 
     private boards: ITeamBoard[];
