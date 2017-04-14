@@ -29,11 +29,15 @@ export class BoardModel {
     public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
     public getRow = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.rowField.referenceName];
     public getDoing = () => this.getBoard() && Boolean(this.workItem.fields[this.getBoard().fields.doneField.referenceName]);
-    public getTeamName = () => this.getTeamBoard() &&  this.getTeamBoard().teamName;
+    public getTeamName = () => this.getTeamBoard() && this.getTeamBoard().teamName;
     private getTeamBoard() {
         const boards = this.boards.reverse();
-        const [areaPathPart] = this.workItem.fields[areaPathField].split("\\").reverse();
-        const [boardByAreaPath] = this.boards.filter(b => b.teamName === areaPathPart)
+        const areaParts = this.workItem.fields[areaPathField].split("\\");
+        let boardByAreaPath: ITeamBoard | undefined = undefined;
+        while (!boardByAreaPath && areaParts.length > 0) {
+            const areaPart = areaParts.pop();
+            boardByAreaPath = boards.filter(b => b.teamName === areaPart)[0];
+        }
         return boardByAreaPath || boards[0];
     };
     public projectName: string;
