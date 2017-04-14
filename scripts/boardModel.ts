@@ -25,11 +25,17 @@ export class BoardModel {
         const boardModel = new BoardModel(location);
         return boardModel.refresh(id).then(() => boardModel);
     }
-    public getBoard = () => this.boards.length === 0 ? undefined : this.boards[this.boards.length - 1].board;
+    public getBoard = () => this.getTeamBoard() && this.getTeamBoard().board;
     public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
     public getRow = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.rowField.referenceName];
     public getDoing = () => this.getBoard() && Boolean(this.workItem.fields[this.getBoard().fields.doneField.referenceName]);
-    public getTeamName = () => this.boards.length === 0 ? undefined : this.boards[this.boards.length - 1].teamName;
+    public getTeamName = () => this.getTeamBoard() &&  this.getTeamBoard().teamName;
+    private getTeamBoard() {
+        const boards = this.boards.reverse();
+        const [areaPathPart] = this.workItem.fields[areaPathField].split("\\").reverse();
+        const [boardByAreaPath] = this.boards.filter(b => b.teamName === areaPathPart)
+        return boardByAreaPath || boards[0];
+    };
     public projectName: string;
 
     private boards: ITeamBoard[];
@@ -93,7 +99,7 @@ export class BoardModel {
                     }
                 ))).then(teamBoards => {
                     this.refreshTimings.measure("getAllBoards");
-                    
+
                     const matchingBoards = teamBoards.filter(t => t.board);
                     this.foundBoard = matchingBoards.length > 0;
                     this.boards = teamBoards.filter(t => t.haveWiData);
