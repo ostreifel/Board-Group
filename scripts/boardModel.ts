@@ -22,8 +22,8 @@ interface ITeamBoard {
 let firstRefresh = true;
 export class BoardModel {
     public static create(id: number, location: string): IPromise<BoardModel> {
-        const boardModel = new BoardModel(id, location);
-        return boardModel.refresh().then(() => boardModel);
+        const boardModel = new BoardModel(location);
+        return boardModel.refresh(id).then(() => boardModel);
     }
     public getBoard = () => this.boards.length === 0 ? undefined : this.boards[this.boards.length - 1].board;
     public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
@@ -41,7 +41,7 @@ export class BoardModel {
 
     private workItem: WorkItem;
     private workItemType: string;
-    private constructor(readonly id: number, readonly location) { }
+    private constructor(readonly location) { }
 
     private completedRefresh() {
         this.refreshTimings.measure("totalTime", false);
@@ -69,10 +69,10 @@ export class BoardModel {
         }
     }
 
-    public refresh(): IPromise<void> {
+    public refresh(workItemId: number): IPromise<void> {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
-        return getWITClient().getWorkItem(this.id).then(wi => {
+        return getWITClient().getWorkItem(workItemId).then(wi => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.workItemType = wi.fields[witField];
@@ -137,7 +137,7 @@ export class BoardModel {
                 value: val
             });
         }
-        return getWITClient().updateWorkItem(patchDocument, this.id).then<void>(
+        return getWITClient().updateWorkItem(patchDocument, this.workItem.id).then<void>(
             (workItem) => {
                 this.workItem = workItem;
                 return void 0;

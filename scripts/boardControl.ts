@@ -37,7 +37,7 @@ export class BoardControl extends Control<{}> {
                         refreshUI();
                     });
                 } else {
-                    this.boardModel.refresh().then(refreshUI);
+                    this.boardModel.refresh(this.wiId).then(refreshUI);
                 }
             });
         });
