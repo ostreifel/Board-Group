@@ -1,5 +1,5 @@
 import { getBoard, getBoardReferences } from "./boardCache";
-import { Board, BoardReference } from "TFS/Work/Contracts";
+import { Board } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { WorkItem } from "TFS/WorkItemTracking/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
@@ -25,12 +25,37 @@ export class BoardModel {
         const boardModel = new BoardModel(location);
         return boardModel.refresh(id).then(() => boardModel);
     }
-    public getBoard = () => this.getTeamBoard() && this.getTeamBoard().board;
-    public getColumn = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.columnField.referenceName];
-    public getRow = () => this.getBoard() && this.workItem.fields[this.getBoard().fields.rowField.referenceName];
-    public getDoing = () => this.getBoard() && Boolean(this.workItem.fields[this.getBoard().fields.doneField.referenceName]);
-    public getTeamName = () => this.getTeamBoard() && this.getTeamBoard().teamName;
-    private getTeamBoard() {
+    public getWorkItemId() {
+        return this.workItem.id;
+    }
+    public getBoard(team?: string) {
+        const teamBoard = this.getTeamBoard(team);
+        return teamBoard && teamBoard.board;
+    };
+    public getColumn(team?: string) {
+        const board = this.getBoard(team);
+        return board && this.workItem.fields[board.fields.columnField.referenceName];
+    };
+    public getRow(team?: string) {
+        const board = this.getBoard(team);
+        return board && this.workItem.fields[board.fields.rowField.referenceName];
+    };
+    public getDoing(team?: string) {
+        const board = this.getBoard(team);
+        return board && this.workItem.fields[board.fields.doneField.referenceName];
+    };
+    public getTeams(): string[] {
+        return this.boards.map(b => b.teamName);
+    }
+
+    public estimatedTeam() {
+        const board = this.getTeamBoard("");
+        return board && board.teamName;
+    };
+    private getTeamBoard(team: string) {
+        if (team) {
+            return this.boards.filter(b => b.teamName === team)[0];
+        }
         const boards = this.boards.reverse();
         const areaParts = this.workItem.fields[areaPathField].split("\\");
         let boardByAreaPath: ITeamBoard | undefined = undefined;
@@ -47,7 +72,6 @@ export class BoardModel {
     private foundBoard: boolean;
     private refreshTimings: Timings;
     private fieldTimings: Timings = new Timings();
-    private teamName: string;
 
     private workItem: WorkItem;
     private workItemType: string;
@@ -93,13 +117,12 @@ export class BoardModel {
                     this.completedRefresh();
                     return;
                 }
-                const lastTeam = teams[teams.length - 1];
                 this.projectName = wi.fields[projectField];
                 return Q.all(teams.map(t => getBoardReferences(this.projectName, t.name).then(
                     references => {
                         return Q.all(references.map(r => getBoard(this.projectName, t.name, r.id))).then(boards => {
                             return this.findAssociatedBoard(t.name, boards);
-                        })
+                        });
                     }
                 ))).then(teamBoards => {
                     this.refreshTimings.measure("getAllBoards");
@@ -125,11 +148,15 @@ export class BoardModel {
             haveWiData: !!board && board.fields.columnField.referenceName in this.workItem.fields
         };
     }
-    public save(field: "columnField" | "rowField", val: string): IPromise<void>;
-    public save(field: "doneField", val: boolean): IPromise<void>;
-    public save(field: "columnField" | "rowField" | "doneField", val: string | boolean): IPromise<void> {
-        if (!this.getBoard()) {
+    public save(team: string | undefined, field: "columnField" | "rowField", val: string): IPromise<void>;
+    public save(team: string | undefined, field: "doneField", val: boolean): IPromise<void>;
+    public save(team: string | undefined, field: "columnField" | "rowField" | "doneField", val: string | boolean): IPromise<void> {
+        if (!team) {
+            team = this.estimatedTeam();
+        }
+        if (!this.getBoard(team)) {
             console.warn(`Save called on ${field} with ${val} when board not set`);
+            trackEvent("saveError", { field, location: this.location });
             return Q(null).then(() => void 0);
         }
         this.fieldTimings.measure("timeToClick");
@@ -138,12 +165,12 @@ export class BoardModel {
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Remove,
-                path: `/fields/${this.getBoard().fields[field].referenceName}`
+                path: `/fields/${this.getBoard(team).fields[field].referenceName}`
             });
         } else {
             patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Add,
-                path: `/fields/${this.getBoard().fields[field].referenceName}`,
+                path: `/fields/${this.getBoard(team).fields[field].referenceName}`,
                 value: val
             });
         }

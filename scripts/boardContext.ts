@@ -2,19 +2,21 @@ import { BoardModel } from './boardModel';
 import { BoardColumnType } from "TFS/Work/Contracts";
 
 function menuItemsFromBoard(boardModel: BoardModel): IContributedMenuItem[] {
-    const columns = boardModel.getBoard().columns;
-    const rows = boardModel.getBoard().rows;
+    // No need to check if on wi board when opening contextmenu from wi on the board.
+    const teamName = VSS.getWebContext().team.name;
+    const columns = boardModel.getBoard(teamName).columns;
+    const rows = boardModel.getBoard(teamName).rows;
     const splitItems = (columnName: string) => [{
         text: "Doing",
         action: () => {
-            boardModel.save("columnField", columnName).then(() =>
-            boardModel.save("doneField", false));
+            boardModel.save(teamName, "columnField", columnName).then(() =>
+            boardModel.save(teamName, "doneField", false));
         }
     }, {
         text: "Done",
         action: () => {
-            boardModel.save("columnField", columnName).then(() =>
-            boardModel.save("doneField", true));
+            boardModel.save(teamName, "columnField", columnName).then(() =>
+            boardModel.save(teamName, "doneField", true));
         }
     }];
     const menuItems: IContributedMenuItem[] = [];
@@ -26,12 +28,12 @@ function menuItemsFromBoard(boardModel: BoardModel): IContributedMenuItem[] {
                 text: c.name,
                 title: c.description,
                 childItems: c.isSplit ? splitItems(c.name): undefined,
-                action: () => boardModel.save("columnField", c.name)
+                action: () => boardModel.save(teamName, "columnField", c.name)
             } as IContributedMenuItem;
         }
         )
     });
-    const column = boardModel.getBoard().columns.filter(c => c.name === boardModel.getColumn())[0];
+    const column = boardModel.getBoard(teamName).columns.filter(c => c.name === boardModel.getColumn())[0];
     if (rows.length > 1 && column.columnType === BoardColumnType.InProgress) {
         menuItems.push({
             text: "Row",
@@ -39,7 +41,7 @@ function menuItemsFromBoard(boardModel: BoardModel): IContributedMenuItem[] {
             childItems: rows.map(r => {
                 return {
                     text: r.name || "(Default Lane)",
-                    action: () => boardModel.save("rowField", r.name)
+                    action: () => boardModel.save(teamName, "rowField", r.name)
                 } as IContributedMenuItem;
             }),
         });

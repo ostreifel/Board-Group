@@ -55,7 +55,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {
-                    boardControl.boardModel.save("columnField", columnValue).then(
+                    boardControl.boardModel.save(undefined, "columnField", columnValue).then(
                         () => {
                             boardControl.updateForBoard();
                             boardControl.refreshWI();
@@ -80,7 +80,7 @@ export class BoardControl extends Control<{}> {
         };
 
         const projectName = this.boardModel.projectName;
-        const teamName = this.boardModel.getTeamName();
+        const teamName = this.boardModel.estimatedTeam();
         const uri = VSS.getWebContext().host.uri;
         const boardName = this.boardModel.getBoard().name;
         const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
@@ -144,7 +144,7 @@ export class BoardControl extends Control<{}> {
                 change: function () {
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
-                        boardControl.boardModel.save("rowField", laneValue).then(
+                        boardControl.boardModel.save(undefined, "rowField", laneValue).then(
                             () => {
                                 boardControl.updateForBoard();
                                 boardControl.refreshWI();
@@ -191,7 +191,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const doneValue = boardControl.getDoneInputValue();
                 if (typeof doneValue === "boolean") {
-                    boardControl.boardModel.save("doneField", doneValue).then(
+                    boardControl.boardModel.save(undefined, "doneField", doneValue).then(
                         () => {
                             boardControl.updateForBoard();
                             boardControl.refreshWI();
