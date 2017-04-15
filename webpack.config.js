@@ -3,7 +3,8 @@ const webpack = require('webpack');
 module.exports = {
     entry: {
         boardGroup: "./js/boardGroup.js",
-        boardContext: "./js/boardContext.js"
+        boardContext: "./js/boardContext.js",
+        bulkBoardContext: "./js/bulkBoardContext.js"
     },
     output: {
         libraryTarget: "amd",
