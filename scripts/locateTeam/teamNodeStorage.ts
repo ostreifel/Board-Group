@@ -29,8 +29,11 @@ export function readNode(projectId: string): IPromise<ITeamNode | null> {
             console.log("error getting area node cache", error);
             const { message, name, stack, status, responseText } = error;
             trackEvent("readNodeCacheError", { message, name, stack, status, responseText });
+            const statusNum = Number(status);
             // If collection has not been created yet;
-            if (Number(error.status) === 404) {
+            if (statusNum === 404 ||
+            // User does not have permissions
+            statusNum === 401) {
                 return null;
             }
             throw error;
