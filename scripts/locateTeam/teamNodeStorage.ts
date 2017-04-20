@@ -1,4 +1,5 @@
 import { ITeamNode } from "./teamNode";
+import { trackEvent } from "../events";
 
 const formatVersion = 1;
 const areaCollection = "area-mappings";
@@ -25,7 +26,9 @@ export function readNode(projectId: string): IPromise<ITeamNode | null> {
         return dataService.getDocument(areaCollection, projectId).then((doc: NodeDoc) => {
             return doc.formatVersion === formatVersion ? doc.node : null;
         }, (error: TfsError): ITeamNode | null => {
-            console.log("error getting page form", error);
+            console.log("error getting area node cache", error);
+            const { message, name, stack, status, responseText } = error;
+            trackEvent("readNodeCacheError", { message, name, stack, status, responseText });
             // If collection has not been created yet;
             if (Number(error.status) === 404) {
                 return null;
