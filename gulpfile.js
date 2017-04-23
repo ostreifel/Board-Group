@@ -51,8 +51,12 @@ gulp.task('copy', ['build'], () => {
 
 
 gulp.task('webpack', ['copy'], () => {
-    return webpack(require('./webpack.config.js'))
-        .pipe(gulp.dest(`${contentFolder}/scripts`));
+    if (yargs.argv.nobundle) {
+        return gulp.src(`${jsFolder}/**/*js`).pipe(gulp.dest(`${contentFolder}/scripts`));
+    } else {
+        return webpack(require('./webpack.config.js'))
+            .pipe(gulp.dest(`${contentFolder}/scripts`));
+    }
 });
 
 gulp.task('package', ['webpack'], () => {

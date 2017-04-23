@@ -3,7 +3,9 @@ Adds a link to the associated board. Allows changing of the lane, column, and do
 Adds a context menu items to the kanban cards to change column and row without dragging.  
 ![kanban context menu image](img/contextMenu.png)  
 Be sure to enable live updates when using the context menu on the cards.
-![live updates click](img/liveupdates.png)
+![live updates click](img/liveupdates.png)  
+Bulk edit from queries and backlogs views the multiselect context menu  
+![bulk update screenshot](img/bulkedit.png)
 
 # Configuration with on Team Services 
 
@@ -31,6 +33,7 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
+(04/22/17) 2.4.1 Bulk edit of from queries and backlogs views  
 (04/08/17) 2.3.51 Info callout  
 (04/08/17) 2.3.37 Update styling  
 Add more screenshots to details page  

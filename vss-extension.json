@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.3.122",
+    "version": "2.4.1",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",
@@ -50,6 +50,10 @@
         {
             "path": "dist/boardContext.html",
             "addressable": true
+        },
+        {
+            "path": "dist/bulkBoardContext.html",
+            "addressable": true
         }
     ],
     "categories": [
@@ -79,6 +83,30 @@
             "properties": {
                 "name": "Board context menu",
                 "uri": "boardContext.html"
+            }
+        },
+        {
+            "id": "board-query-bulk-edit",
+            "type": "ms.vss-web.action-provider",
+            "description": "",
+            "targets": [
+                "ms.vss-work-web.query-result-work-item-menu"
+            ],
+            "properties": {
+                "group": "contributed",
+                "uri": "bulkBoardContext.html"
+            }
+        },
+        {
+            "id": "board-backlogs-bulk-edit",
+            "type": "ms.vss-web.action-provider",
+            "description": "",
+            "targets": [
+                "ms.vss-work-web.backlog-item-menu"
+            ],
+            "properties": {
+                "group": "contributed",
+                "uri": "bulkBoardContext.html"
             }
         }
     ]
