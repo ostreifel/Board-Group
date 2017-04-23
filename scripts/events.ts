@@ -12,12 +12,15 @@ export interface IMeasurements {
     [name: string]: number;
 }
 
-const flush = new DelayedFunction(null, 200, "flush", () => {
+const flush = new DelayedFunction(null, 100, "flush", () => {
     const insights = getInsights();
     if (insights) {
         insights.flush();
     }
 });
+export function flushNow() {
+    flush.invokeNow();
+}
 
 export function trackEvent(name: string, properties?: IProperties, measurements?: IMeasurements) {
     const insights = getInsights();

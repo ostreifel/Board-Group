@@ -27,6 +27,7 @@ export function menuItemsFromBoard(teamName: string,
     menuItems.push({
         text: "Column",
         groupId: "boardGroup",
+        icon: "img/columnIcon.png",
         childItems: columns.map(c => {
             return {
                 text: c.name,
@@ -42,6 +43,7 @@ export function menuItemsFromBoard(teamName: string,
         menuItems.push({
             text: "Row",
             groupId: "boardGroup",
+            icon: "img/rowIcon.png",
             childItems: rows.map(r => {
                 return {
                     text: r.name || "(Default Lane)",

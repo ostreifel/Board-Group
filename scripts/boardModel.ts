@@ -32,6 +32,9 @@ export class BoardModel {
         const teamBoard = this.getTeamBoard(team);
         return teamBoard && teamBoard.board;
     };
+    public getBoardIds() {
+        return this.boards.map(b => b.board.id);
+    }
     public getColumn(team?: string) {
         const board = this.getBoard(team);
         return board && this.workItem.fields[board.fields.columnField.referenceName];
