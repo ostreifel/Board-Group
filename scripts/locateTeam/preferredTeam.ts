@@ -17,7 +17,7 @@ export interface IPreferredTeamContext {
 }
 
 function toId({ projectId, workItemType, areaPath }: IPreferredTeamContext) {
-    return `${VSS.getWebContext().user.id}.${projectId}.${workItemType}.${areaPath}`;
+    return `${projectId}.${workItemType}.${areaPath}`.replace(/\\/g, '-');
 }
 
 export function storeTeamPreference(context: IPreferredTeamContext, team: string): IPromise<string> {
@@ -28,12 +28,12 @@ export function storeTeamPreference(context: IPreferredTeamContext, team: string
         __etag: -1
     };
     return VSS.getService(VSS.ServiceIds.ExtensionData).then((dataService: IExtensionDataService) => {
-        return dataService.setDocument(preferredTeamCollection, teamDoc).then((doc: PreferenceDoc) => doc.team);
+        return dataService.setDocument(preferredTeamCollection, teamDoc, {scopeType: "User"}).then((doc: PreferenceDoc) => doc.team);
     });
 }
 export function readTeamPreference(context: IPreferredTeamContext): IPromise<string | null> {
     return VSS.getService(VSS.ServiceIds.ExtensionData).then((dataService: IExtensionDataService) => {
-        return dataService.getDocument(preferredTeamCollection, toId(context)).then((doc: PreferenceDoc) => {
+        return dataService.getDocument(preferredTeamCollection, toId(context), {scopeType: "User"}).then((doc: PreferenceDoc) => {
             return doc.formatVersion === formatVersion ? doc.team : null;
         }, (error: TfsError): string | null => {
             const status = Number(error.status);
