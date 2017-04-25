@@ -53,8 +53,16 @@
         .board-selector:not(:focus):not(:hover) {
             border-color: transparent;
         }
-        .board-link::before {
-            margin-right: 2px;
+        .dropdown {
+            margin: 0;
+            padding: 0;
+        }
+        .dropdown li {
+            border: 1px solid gray;
+            padding: 2px 10px;
+        }
+        .dropdown li.selected {
+            text-decoration: underline;
         }
         .board-info {
             float: right;

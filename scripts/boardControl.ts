@@ -12,6 +12,7 @@ export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
     private boardModel: BoardModel;
+    private team: string;
     private clickTiming: Timings = new Timings();
 
     // ui
@@ -25,7 +26,7 @@ export class BoardControl extends Control<{}> {
             service.getFieldValues([id]).then(fields => {
                 this.wiId = fields[id] as number;
                 const refreshUI = () => {
-                    if (this.boardModel.getColumn()) {
+                    if (this.boardModel.getColumn(this.team)) {
                         this.updateForBoard();
                     } else {
                         this.updateNoBoard();
@@ -34,6 +35,7 @@ export class BoardControl extends Control<{}> {
                 if (!this.boardModel) {
                     BoardModel.create(this.wiId, "form").then(boardModel => {
                         this.boardModel = boardModel;
+                        this.team = this.team || boardModel.estimatedTeam();
                         refreshUI();
                     });
                 } else {
@@ -50,8 +52,8 @@ export class BoardControl extends Control<{}> {
     private updateForBoard() {
         const boardControl = this;
         const columnOptions: IComboOptions = {
-            value: this.boardModel.getColumn(),
-            source: this.boardModel.getBoard().columns.map((c) => c.name),
+            value: this.boardModel.getColumn(this.team),
+            source: this.boardModel.getBoard(this.team).columns.map((c) => c.name),
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {
@@ -80,13 +82,12 @@ export class BoardControl extends Control<{}> {
         };
 
         const projectName = this.boardModel.projectName;
-        const teamName = this.boardModel.estimatedTeam();
         const uri = VSS.getWebContext().host.uri;
-        const boardName = this.boardModel.getBoard().name;
-        const boardUrl = `${uri}${projectName}/${teamName}/_backlogs/board/${boardName}`;
+        const boardName = this.boardModel.getBoard(this.team).name;
+        const boardUrl = `${uri}${projectName}/${this.team}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").addClass("board-link").text(this.boardModel.getBoard().name)
+        const boardLink = $("<a/>").addClass("board-link").text(boardName)
             .attr({
                 href: boardUrl,
                 target: "_blank",
@@ -98,17 +99,28 @@ export class BoardControl extends Control<{}> {
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
         this._element.append(boardLink);
+        const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().map(t =>
+            `<li class=${t===this.team ? 'selected' : 'unselected'}>${t}</li>`
+        ).join('')}</ul>`);
+        $('li', dropdown).on('click', e => {
+            this.team = e.target.textContent;
+            this.refresh();
+        })
         const button = $(`
             <button class="board-selector">
                 <img src="img/chevronIcon.png"/>
-            </button>`).on("click", () => {});
+            </button>`).on("click", (e) => {
+                dropdown.toggle();
+                VSS.resize();
+            });
         this._element.append(button);
-        if (this.boardModel.getColumn()) {
+        this._element.append(dropdown);
+        if (this.boardModel.getColumn(this.team)) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
             this.columnInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
-                    const itemsShown = Math.min(5, this.boardModel.getBoard().columns.length);
+                    const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).columns.length);
                     const above = this.columnInput._element.position().top + this.columnInput._element.height();
                     const height = Math.max(startHeight, above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
@@ -138,14 +150,14 @@ export class BoardControl extends Control<{}> {
         const laneElem = $(".lane-input", this._element);
         laneElem.html("");
         const columnValue = this.getColumnInputValue();
-        const column = this.boardModel.getBoard().columns.filter((c) => c.name === columnValue)[0];
-        if (this.boardModel.getBoard().rows.length > 1
+        const column = this.boardModel.getBoard(this.team).columns.filter((c) => c.name === columnValue)[0];
+        if (this.boardModel.getBoard(this.team).rows.length > 1
             && column.columnType !== BoardColumnType.Incoming
             && column.columnType !== BoardColumnType.Outgoing) {
             const boardControl = this;
             const laneOptions: IComboOptions = {
-                value: this.boardModel.getRow() || "(Default Lane)",
-                source: this.boardModel.getBoard().rows.map((r) => r.name || "(Default Lane)"),
+                value: this.boardModel.getRow(this.team) || "(Default Lane)",
+                source: this.boardModel.getBoard(this.team).rows.map((r) => r.name || "(Default Lane)"),
                 change: function () {
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
@@ -175,7 +187,7 @@ export class BoardControl extends Control<{}> {
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
             this.laneInput._bind("dropDownToggled focus", (event, args: { isDropVisible: boolean }) => {
                 if (this.laneInput.isDropVisible()) {
-                    const itemsShown = Math.min(5, this.boardModel.getBoard().rows.length);
+                    const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).rows.length);
                     const above = this.laneInput._element.position().top + this.laneInput._element.height();
                     const height = Math.max(startHeight, above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
@@ -191,7 +203,7 @@ export class BoardControl extends Control<{}> {
     private updateDoneInput() {
         const boardControl = this;
         const doneOptions: IComboOptions = {
-            value: this.boardModel.getDoing() ? "True" : "False",
+            value: this.boardModel.getDoing(this.team) ? "True" : "False",
             source: ["True", "False"],
             change: function () {
                 const doneValue = boardControl.getDoneInputValue();
@@ -208,7 +220,7 @@ export class BoardControl extends Control<{}> {
             }
         };
         const columnValue = this.getColumnInputValue();
-        const isSplit = this.boardModel.getBoard().columns.filter((c) => c.name === columnValue)[0].isSplit;
+        const isSplit = this.boardModel.getBoard(this.team).columns.filter((c) => c.name === columnValue)[0].isSplit;
 
         const doneElem = $(".done-input", this._element);
         doneElem.html("");
