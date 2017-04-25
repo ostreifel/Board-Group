@@ -30,9 +30,8 @@ Within the same Weblayout choose a Section element and add
 <GroupContribution Label="Board" Id="ottostreifel.board-group.board-work-item-form-group"/>
 ```
 
-
-
 # Change Log
+(04/24/17) 2.4.35 Allow team to be selected from form  
 (04/22/17) 2.4.1 Bulk edit of from queries and backlogs views  
 (04/08/17) 2.3.51 Info callout  
 (04/08/17) 2.3.37 Update styling  
