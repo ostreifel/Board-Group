@@ -134,6 +134,7 @@ export class BoardControl extends Control<{}> {
             </button>`).click((e) => {
                 dropdown.toggle();
                 VSS.resize();
+                trackEvent("teamSwitcherClick", { expand: String(dropdown.is(":visible")) });
             });
         this._element.append(button);
         this._element.append(dropdown);
