@@ -6,8 +6,14 @@ import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import { BoardModel } from "./boardModel";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
+import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
+import * as Q from "q";
 
 const startHeight = 175;
+const id = "System.Id";
+const wit = "System.WorkItemType";
+const areaPath = "System.AreaPath";
+const projectId = "System.TeamProject";
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
@@ -20,10 +26,26 @@ export class BoardControl extends Control<{}> {
     private laneInput: Combo | null;
     private doneInput: Combo | null;
 
-    public refresh() {
-        const id = "System.Id";
+    private updatePreferredTeam(team: string) {
         WorkItemFormService.getService().then(service => {
-            service.getFieldValues([id]).then(fields => {
+            service.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
+                const context: IPreferredTeamContext = {
+                    areaPath: fields[areaPath] as string,
+                    projectId: fields[projectId] as string,
+                    workItemType: fields[wit] as string
+                };
+                storeTeamPreference(context, team).then(team => {
+                    trackEvent("preferredTeamUpdated", { teamCount: String(this.boardModel.getTeams().length) });
+                });
+            })
+        });
+        this.team = team;
+        this.refresh();
+    }
+
+    public refresh() {
+        WorkItemFormService.getService().then(service => {
+            service.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
                 this.wiId = fields[id] as number;
                 const refreshUI = () => {
                     if (this.boardModel.getColumn(this.team)) {
@@ -33,9 +55,14 @@ export class BoardControl extends Control<{}> {
                     }
                 };
                 if (!this.boardModel) {
-                    BoardModel.create(this.wiId, "form").then(boardModel => {
+                    const context: IPreferredTeamContext = {
+                        areaPath: fields[areaPath] as string,
+                        projectId: fields[projectId] as string,
+                        workItemType: fields[wit] as string
+                    };
+                    Q.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]).then(([boardModel, team]) => {
                         this.boardModel = boardModel;
-                        this.team = this.team || boardModel.estimatedTeam();
+                        this.team = team || boardModel.estimatedTeam();
                         refreshUI();
                     });
                 } else {
@@ -100,11 +127,10 @@ export class BoardControl extends Control<{}> {
             });
         this._element.append(boardLink);
         const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().map(t =>
-            `<li class=${t===this.team ? 'selected' : 'unselected'}>${t}</li>`
+            `<li class=${t === this.team ? 'selected' : 'unselected'}>${t}</li>`
         ).join('')}</ul>`);
         $('li', dropdown).on('click', e => {
-            this.team = e.target.textContent;
-            this.refresh();
+            this.updatePreferredTeam(e.target.textContent);
         })
         const button = $(`
             <button class="board-selector">
