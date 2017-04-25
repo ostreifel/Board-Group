@@ -39,13 +39,22 @@
         .board-info:not(:hover):not(:focus) .board-callout {
             visibility: hidden;
         }
-        .bowtie-link {
-            margin-left: 2px;
-        }
         .board-link {
             margin-bottom: 5px;
-            display: block;
             font-size: 15px;
+        }
+        .board-selector {
+            padding: 0px;
+            background-color: transparent;
+            vertical-align: middle;
+            height: 18px;
+            margin-left: 2px;
+        }
+        .board-selector:not(:focus):not(:hover) {
+            border-color: transparent;
+        }
+        .board-link::before {
+            margin-right: 2px;
         }
         .board-info {
             float: right;

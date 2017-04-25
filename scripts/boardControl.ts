@@ -92,12 +92,17 @@ export class BoardControl extends Control<{}> {
                 target: "_blank",
                 title: "Navigate to board"
             })
-            .append(`<span class="bowtie-icon bowtie-link"></span>`)
+            // .prepend(`<span class="bowtie-icon bowtie-link"></span>`)
             .click(() => {
                 this.clickTiming.measure("timeToClick", false);
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
         this._element.append(boardLink);
+        const button = $(`
+            <button class="board-selector">
+                <img src="img/chevronIcon.png"/>
+            </button>`).on("click", () => {});
+        this._element.append(button);
         if (this.boardModel.getColumn()) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
