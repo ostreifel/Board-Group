@@ -54,20 +54,16 @@ export class BoardControl extends Control<{}> {
                         this.updateNoBoard();
                     }
                 };
-                if (!this.boardModel) {
-                    const context: IPreferredTeamContext = {
-                        areaPath: fields[areaPath] as string,
-                        projectId: fields[projectId] as string,
-                        workItemType: fields[wit] as string
-                    };
-                    Q.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]).then(([boardModel, team]) => {
-                        this.boardModel = boardModel;
-                        this.team = team || boardModel.estimatedTeam();
-                        refreshUI();
-                    });
-                } else {
-                    this.boardModel.refresh(this.wiId).then(refreshUI);
-                }
+                const context: IPreferredTeamContext = {
+                    areaPath: fields[areaPath] as string,
+                    projectId: fields[projectId] as string,
+                    workItemType: fields[wit] as string
+                };
+                Q.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]).then(([boardModel, team]) => {
+                    this.boardModel = boardModel;
+                    this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
+                    refreshUI();
+                });
             });
         });
     }
@@ -114,7 +110,7 @@ export class BoardControl extends Control<{}> {
         const boardUrl = `${uri}${projectName}/${this.team}/_backlogs/board/${boardName}`;
 
         this._element.html("");
-        const boardLink = $("<a/>").addClass("board-link").text(boardName)
+        const boardLink = $("<a/>").addClass("board-link").text(`${this.team}\\${boardName}`)
             .attr({
                 href: boardUrl,
                 target: "_blank",
@@ -126,7 +122,7 @@ export class BoardControl extends Control<{}> {
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
             });
         this._element.append(boardLink);
-        const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().map(t =>
+        const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().sort().map(t =>
             `<li class=${t === this.team ? 'selected' : 'unselected'}>${t}</li>`
         ).join('')}</ul>`);
         $('li', dropdown).on('click', e => {
@@ -135,7 +131,7 @@ export class BoardControl extends Control<{}> {
         const button = $(`
             <button class="board-selector">
                 <img src="img/chevronIcon.png"/>
-            </button>`).on("click", (e) => {
+            </button>`).click((e) => {
                 dropdown.toggle();
                 VSS.resize();
             });

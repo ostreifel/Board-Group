@@ -60,9 +60,14 @@
         .dropdown li {
             border: 1px solid gray;
             padding: 2px 10px;
+            cursor: pointer;
+        }
+        .dropdown li:not(:last-child) {
+            border-bottom: none;
         }
         .dropdown li.selected {
             text-decoration: underline;
+            background-color: #e5e5e5;
         }
         .board-info {
             float: right;
