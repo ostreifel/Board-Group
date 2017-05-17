@@ -8,6 +8,7 @@ import { ITeam } from "./locateTeam/teamNode";
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
+import { getEnabledBoards } from "./backlogConfiguration";
 
 const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
@@ -121,20 +122,25 @@ export class BoardModel {
                     return;
                 }
                 this.projectName = wi.fields[projectField];
-                return Q.all(teams.map(t => getBoardReferences(this.projectName, t.name).then(
-                    references => {
-                        return Q.all(references.map(r => getBoard(this.projectName, t.name, r.id))).then(boards => {
-                            return this.findAssociatedBoard(t.name, boards);
-                        });
+                return Q.all(teams.map(t => Q.all([
+                    getBoardReferences(this.projectName, t.name),
+                    getEnabledBoards(this.projectName, t.name)
+                ]).then(
+                    ([references, enabledBoards]) => {
+                        return Q.all(references.filter(r => enabledBoards.some(b => b === r.name))
+                            .map(r => getBoard(this.projectName, t.name, r.id)))
+                            .then(boards => {
+                                return this.findAssociatedBoard(t.name, boards);
+                            });
                     }
-                ))).then(teamBoards => {
-                    this.refreshTimings.measure("getAllBoards");
+                    ))).then(teamBoards => {
+                        this.refreshTimings.measure("getAllBoards");
 
-                    const matchingBoards = teamBoards.filter(t => t.board);
-                    this.foundBoard = matchingBoards.length > 0;
-                    this.boards = teamBoards.filter(t => t.haveWiData);
-                    this.completedRefresh();
-                });
+                        const matchingBoards = teamBoards.filter(t => t.board);
+                        this.foundBoard = matchingBoards.length > 0;
+                        this.boards = teamBoards.filter(t => t.haveWiData);
+                        this.completedRefresh();
+                    });
             });
         });
     }
