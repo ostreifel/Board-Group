@@ -37,7 +37,7 @@ export class BoardControl extends Control<{}> {
                 storeTeamPreference(context, team).then(team => {
                     trackEvent("preferredTeamUpdated", { teamCount: String(this.boardModel.getTeams().length) });
                 });
-            })
+            });
         });
         this.team = team;
         this.refresh();
@@ -127,7 +127,7 @@ export class BoardControl extends Control<{}> {
         ).join('')}</ul>`);
         $('li', dropdown).on('click', e => {
             this.updatePreferredTeam(e.target.textContent);
-        })
+        });
         const button = $(`
             <button class="board-selector">
                 <img src="img/chevronIcon.png"/>
@@ -136,8 +136,10 @@ export class BoardControl extends Control<{}> {
                 VSS.resize();
                 trackEvent("teamSwitcherClick", { expand: String(dropdown.is(":visible")) });
             });
-        this._element.append(button);
-        this._element.append(dropdown);
+        if (this.boardModel.getTeams().length > 1) {
+            this._element.append(button);
+            this._element.append(dropdown);
+        }
         if (this.boardModel.getColumn(this.team)) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
