@@ -6,10 +6,15 @@ interface IBoardContext {
     workItemType;
 }
 const menuAction: Partial<IContributedMenuSource> = {
-    getMenuItems: (context: IBoardContext) =>
-        BoardModel.create(context.id, "card").then(boardModel =>
+    getMenuItems: (context: IBoardContext) => {
+        if (!context.id) {
+            return [];
+        }
+
+        return BoardModel.create(context.id, "card").then(boardModel =>
             // No need to check if on wi board when opening contextmenu from wi on the board.
             menuItemsFromBoard(VSS.getWebContext().team.name, boardModel))
+    }
 };
 
 VSS.register(VSS.getContribution().id, menuAction);
