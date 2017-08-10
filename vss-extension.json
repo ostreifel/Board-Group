@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.4.47",
+    "version": "2.4.48",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",
@@ -78,7 +78,8 @@
             "type": "ms.vss-web.action-provider",
             "description": "Edit board column from board card",
             "targets": [
-                "ms.vss-work-web.backlog-board-card-item-menu"
+                "ms.vss-work-web.backlog-board-card-item-menu",
+                "ms.vss-work-web.work-item-context-menu"
             ],
             "properties": {
                 "name": "Board context menu",
