@@ -172,7 +172,7 @@ export class BoardModel {
         trackEvent("UpdateBoardField", { field, location: this.location }, this.fieldTimings.measurements);
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
-            patchDocument.push(<JsonPatchOperation>{
+            patchDocument.push(<JsonPatchOperation>{ 
                 op: Operation.Remove,
                 path: `/fields/${this.getBoard(team).fields[field].referenceName}`
             });

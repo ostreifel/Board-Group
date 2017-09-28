@@ -30,6 +30,10 @@ Within the same Weblayout choose a Section element and add
 <GroupContribution Label="Board" Id="ottostreifel.board-group.board-work-item-form-group"/>
 ```
 
+Be sure to leave a rating if you found this extension to be useful.  
+[![Donate](img/donate.png)](https://www.paypal.me/OttoStreifel/5)
+
+
 # Change Log
 (04/24/17) 2.4.44 Filter out inactive boards  
 (04/24/17) 2.4.35 Allow team to be selected from form  
