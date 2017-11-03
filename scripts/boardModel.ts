@@ -1,7 +1,7 @@
 import { getBoard, getBoardReferences } from "./boardCache";
-import { Board } from "TFS/Work/Contracts";
+import { Board, BoardColumn } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
-import { WorkItem } from "TFS/WorkItemTracking/Contracts";
+import { WorkItem, WorkItemType } from "TFS/WorkItemTracking/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 import Q = require("q");
 import { ITeam } from "./locateTeam/teamNode";
@@ -9,10 +9,12 @@ import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { getEnabledBoards } from "./backlogConfiguration";
+import { getWorkItemType } from "scripts/workItemType";
 
 const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
 const areaPathField = "System.AreaPath";
+const stateField = "System.State";
 
 interface ITeamBoard {
     teamName: string;
@@ -69,6 +71,23 @@ export class BoardModel {
         }
         return boardByAreaPath || boards[0];
     };
+    public getValidColumns(team: string): BoardColumn[] {
+        const teamBoard = this.getTeamBoard(team);
+        if (!teamBoard) {
+            return [];
+        }
+        const state = this.workItem.fields[stateField] || "";
+        if (state in this.workItemType.transitions) {
+            const nextStates = this.workItemType.transitions[state].map((t) => t.to).reduce(
+                (arr, val) => {arr[val] = undefined; return arr}, {} as {[state: string]: void}
+            );
+            return teamBoard.board.columns.filter((c) => {
+                const columnStates = teamBoard.board.allowedMappings[c.name][this.workItemType.name];
+                return columnStates.filter((s) => s in nextStates).length > 0;
+            })
+        }
+        return teamBoard.board.columns;
+    }
     public projectName: string;
 
     private boards: ITeamBoard[];
@@ -78,7 +97,7 @@ export class BoardModel {
     private fieldTimings: Timings = new Timings();
 
     private workItem: WorkItem;
-    private workItemType: string;
+    private workItemType: WorkItemType;
     private constructor(readonly location) { }
 
     private completedRefresh() {
@@ -113,15 +132,20 @@ export class BoardModel {
         return getWITClient().getWorkItem(workItemId).then(wi => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
-            this.workItemType = wi.fields[witField];
-            return getTeamsForAreaPathFromCache(wi.fields[projectField], wi.fields[areaPathField]).then(teams => {
+            this.projectName = wi.fields[projectField];
+            return Q.all(
+                [
+                    getTeamsForAreaPathFromCache(this.projectName, wi.fields[areaPathField]),
+                    getWorkItemType(this.projectName, wi.fields[witField])
+                ]
+            ).then(([teams, wit]) => {
+                this.workItemType = wit;
                 this.refreshTimings.measure("cacheRead");
                 this.teams = teams;
                 if (teams.length === 0) {
                     this.completedRefresh();
                     return;
                 }
-                this.projectName = wi.fields[projectField];
                 return Q.all(teams.map(t => Q.all([
                     getBoardReferences(this.projectName, t.name),
                     getEnabledBoards(this.projectName, t.name)
@@ -148,7 +172,7 @@ export class BoardModel {
     private findAssociatedBoard(teamName: string, boards: Board[]): ITeamBoard {
         const [board] = boards.filter(b => {
             for (let key in b.allowedMappings) {
-                return this.workItemType in b.allowedMappings[key];
+                return this.workItemType.name in b.allowedMappings[key];
             }
         });
         return {
