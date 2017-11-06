@@ -9,7 +9,7 @@ import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { getEnabledBoards } from "./backlogConfiguration";
-import { getWorkItemType } from "scripts/workItemType";
+import { getWorkItemType } from "./workItemType";
 
 const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
