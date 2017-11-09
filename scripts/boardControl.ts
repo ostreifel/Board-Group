@@ -76,7 +76,7 @@ export class BoardControl extends Control<{}> {
         const boardControl = this;
         const columnOptions: IComboOptions = {
             value: this.boardModel.getColumn(this.team),
-            source: this.boardModel.getBoard(this.team).columns.map((c) => c.name),
+            source: this.boardModel.getValidColumns(this.team).map((c) => c.name),
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {

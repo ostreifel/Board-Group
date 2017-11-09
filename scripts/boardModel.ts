@@ -82,8 +82,7 @@ export class BoardModel {
                 (arr, val) => {arr[val] = undefined; return arr}, {} as {[state: string]: void}
             );
             return teamBoard.board.columns.filter((c) => {
-                const columnStates = teamBoard.board.allowedMappings[c.name][this.workItemType.name];
-                return columnStates.filter((s) => s in nextStates).length > 0;
+                return c.stateMappings[this.workItemType.name] in nextStates;
             })
         }
         return teamBoard.board.columns;
