@@ -7,7 +7,7 @@ import * as Q from "q";
 const settings: {
     [projectName: string]: {
         [teamName: string]: {
-            backlogConfigurationData: CachedValue<BacklogConfiguration>
+            backlogConfigurationData: CachedValue<BacklogConfiguration | null>
             teamSettingsData: CachedValue<TeamSetting>
         }
     }
@@ -25,23 +25,30 @@ function loadSettings(projectName: string, teamName: string) {
             teamId: teamName
         };
         settings[projectName][teamName] = {
-            backlogConfigurationData: new CachedValue(() => getWorkClient().getBacklogConfigurations(teamContext)),
+            backlogConfigurationData: new CachedValue(() => {
+                if (getWorkClient().getBacklogConfigurations) {
+                    return getWorkClient().getBacklogConfigurations(teamContext);
+                } else {
+                    return Q(null);
+                }
+            }),
             teamSettingsData: new CachedValue(() => getWorkClient().getTeamSettings(teamContext))
         };
     }
 }
 
-export function getEnabledBoards(projectName: string, teamName: string) {
+export function getEnabledBoards(projectName: string, teamName: string): Q.IPromise<(board: string) => boolean> {
     loadSettings(projectName, teamName);
     const { backlogConfigurationData, teamSettingsData } = settings[projectName][teamName];
     return Q.all([
         backlogConfigurationData.getValue(),
         teamSettingsData.getValue()
     ]).then(([backlogSettings, teamSettings]) => {
-        return [
+        const boards = backlogConfigurationData ? null : [
             ...backlogSettings.portfolioBacklogs,
             backlogSettings.requirementBacklog,
             backlogSettings.taskBacklog
         ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
+        return (board: string) => !boards || boards.indexOf(board) >= 0;
     });
 }

@@ -149,8 +149,8 @@ export class BoardModel {
                     getBoardReferences(this.projectName, t.name),
                     getEnabledBoards(this.projectName, t.name)
                 ]).then(
-                    ([references, enabledBoards]) => {
-                        return Q.all(references.filter(r => enabledBoards.some(b => b === r.name))
+                    ([references, isBoardEnabled]) => {
+                        return Q.all(references.filter(r => isBoardEnabled(r.name))
                             .map(r => getBoard(this.projectName, t.name, r.id)))
                             .then(boards => {
                                 return this.findAssociatedBoard(t.name, boards);
