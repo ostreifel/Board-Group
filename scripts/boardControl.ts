@@ -208,7 +208,7 @@ export class BoardControl extends Control<{}> {
                     }
                 }
             };
-            laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Lane"));
+            laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Swimlane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
             this.laneInput._bind("dropDownToggled focus", (event, args: { isDropVisible: boolean }) => {
                 if (this.laneInput.isDropVisible()) {

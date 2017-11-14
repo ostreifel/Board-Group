@@ -41,7 +41,7 @@ export function menuItemsFromBoard(teamName: string,
     const column = boardModel.getBoard(teamName).columns.filter(c => c.name === boardModel.getColumn())[0];
     if (rows.length > 1 && column.columnType === BoardColumnType.InProgress) {
         menuItems.push({
-            text: "Row",
+            text: "Swimlane",
             groupId: "boardGroup",
             icon: "img/rowIcon.png",
             childItems: rows.map(r => {
