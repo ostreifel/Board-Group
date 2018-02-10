@@ -72,6 +72,20 @@ export class BoardControl extends Control<{}> {
         this._element.html(`<div class="no-board-message">No board found for the current area path</div>`);
     }
 
+    private readonly onModelSaveSuccess = () => {
+        this.updateForBoard();
+        this.refreshWI();
+    }
+    private readonly onModelSaveFailure = (error: TfsError) => {
+        this.updateForBoard();
+        const message: string = (error && error.message) ||
+            (error && error["value"] && error["value"]["message"]) ||
+            error + "";
+        $(".board-error", this._element).text(message);
+        trackEvent("saveFailure", {message});
+        console.log("save failure", error);
+    }
+
     private updateForBoard() {
         const boardControl = this;
         const columnOptions: IComboOptions = {
@@ -80,11 +94,10 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {
-                    boardControl.boardModel.save(undefined, "columnField", columnValue).then(
-                        () => {
-                            boardControl.updateForBoard();
-                            boardControl.refreshWI();
-                        });
+                    boardControl.boardModel.save(undefined, "columnField", columnValue)
+                    .then(
+                        boardControl.onModelSaveSuccess,
+                        boardControl.onModelSaveFailure);
                 }
             },
 
@@ -159,6 +172,7 @@ export class BoardControl extends Control<{}> {
         this._element.append(`<div class="lane-input" />`);
         this._element.append(`<div class="done-input" />`);
         this._element.append(`<div class="disclaimer">Board changes are saved immediately.</div>`);
+        this._element.append(`<div class="board-error"></div>`);
         this.updateLaneInput();
         this.updateDoneInput();
     }
@@ -186,11 +200,10 @@ export class BoardControl extends Control<{}> {
                 change: function () {
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
-                        boardControl.boardModel.save(undefined, "rowField", laneValue).then(
-                            () => {
-                                boardControl.updateForBoard();
-                                boardControl.refreshWI();
-                            });
+                        boardControl.boardModel.save(undefined, "rowField", laneValue)
+                        .then(
+                            boardControl.onModelSaveSuccess,
+                            boardControl.onModelSaveFailure);
                     }
                 },
                 dropOptions: {
@@ -233,11 +246,10 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const doneValue = boardControl.getDoneInputValue();
                 if (typeof doneValue === "boolean") {
-                    boardControl.boardModel.save(undefined, "doneField", doneValue).then(
-                        () => {
-                            boardControl.updateForBoard();
-                            boardControl.refreshWI();
-                        });
+                    boardControl.boardModel.save(undefined, "doneField", doneValue)
+                    .then(
+                        boardControl.onModelSaveSuccess,
+                        boardControl.onModelSaveFailure);
                 }
             },
             dropOptions: {
