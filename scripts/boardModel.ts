@@ -92,7 +92,6 @@ export class BoardModel {
 
     private boards: ITeamBoard[];
     private teams: ITeam[];
-    private foundBoard: boolean;
     private refreshTimings: Timings;
     private fieldTimings: Timings = new Timings();
 
@@ -129,6 +128,7 @@ export class BoardModel {
     public refresh(workItemId: number): IPromise<void> {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
+        
         return getWITClient().getWorkItem(workItemId).then(wi => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
@@ -160,8 +160,6 @@ export class BoardModel {
                     ))).then(teamBoards => {
                         this.refreshTimings.measure("getAllBoards");
 
-                        const matchingBoards = teamBoards.filter(t => t.board);
-                        this.foundBoard = matchingBoards.length > 0;
                         this.boards = teamBoards.filter(t => t.haveWiData);
                         this.completedRefresh();
                     });
@@ -171,9 +169,8 @@ export class BoardModel {
 
     private findAssociatedBoard(teamName: string, boards: Board[]): ITeamBoard {
         const [board] = boards.filter(b => {
-            for (let key in b.allowedMappings) {
-                return this.workItemType.name in b.allowedMappings[key];
-            }
+            const state = this.workItem.fields[stateField];
+            return this.getAllowedStates(b, this.workItem.fields[witField]).indexOf(state) >= 0;
         });
         return {
             teamName,
@@ -214,9 +211,8 @@ export class BoardModel {
             }
         );
     }
-    private getAllowedStates(team: string = "", witName = ""): string[] {
+    private getAllowedStates({allowedMappings}: Board, witName = ""): string[] {
         const states: string[] = [];
-        const {allowedMappings} = this.getTeamBoard(team).board;
         for (const columnGroup in allowedMappings) {
             for (const mappedWit in allowedMappings[columnGroup]) {
                 if (witName && witName !== mappedWit) {
@@ -229,12 +225,13 @@ export class BoardModel {
     }
 
     public getColumnIndex(team: string = "", move?: "move to top"): PromiseLike<number> {
-        const {columnField, doneField, rowField} = this.getTeamBoard(team).board.fields;
+        const {board} = this.getTeamBoard(team);
+        const {columnField, doneField, rowField} = board.fields;
         const colName = columnField.referenceName;
         const doneName = doneField.referenceName;
         const rowName = rowField.referenceName;
         const {fields} = this.workItem;
-        const states = this.getAllowedStates(team);
+        const states = this.getAllowedStates(board);
         const query = `
 SELECT
         System.Id
