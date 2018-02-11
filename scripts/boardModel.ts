@@ -257,6 +257,7 @@ ORDER BY Microsoft.VSTS.Common.StackRank
             if (!move || pos === 0) {
                 return Q(pos);
             }
+            trackEvent("UpdateBoardField", { field: "colPos", location: this.location });
             return getWITClient().getWorkItem(ids[0], [stackRankField]).then((wi) => {
                 const newStackRank = wi.fields[stackRankField] - 1;
                 const update: JsonPatchDocument & JsonPatchOperation[] = [{
