@@ -10,7 +10,7 @@ import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "
 import * as Q from "q";
 
 let updateColunIndexCounter = 0;
-const startHeight = 190;
+const startHeight = () => $(".board-control").height();
 const id = "System.Id";
 const wit = "System.WorkItemType";
 const areaPath = "System.AreaPath";
@@ -74,8 +74,7 @@ export class BoardControl extends Control<{}> {
     }
 
     private readonly onModelSaveSuccess = () => {
-        this.updateForBoard();
-        this.refreshWI();
+        this.refreshWI().then(refreshed => refreshed || this.updateForBoard());
     }
     private readonly onModelSaveFailure = (error: TfsError) => {
         this.updateForBoard();
@@ -107,7 +106,7 @@ export class BoardControl extends Control<{}> {
             },
             blur: function (this: Combo) {
                 if (!this.isDropVisible()) {
-                    VSS.resize(window.innerWidth, startHeight);
+                    VSS.resize();
                 }
             },
             focus: function (this: Combo) {
@@ -160,10 +159,10 @@ export class BoardControl extends Control<{}> {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).columns.length);
                     const above = this.columnInput._element.position().top + this.columnInput._element.height();
-                    const height = Math.max(startHeight, above + 23 * itemsShown + 5);
+                    const height = Math.max(startHeight(), above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
-                    VSS.resize(window.innerWidth, startHeight);
+                    VSS.resize();
                 }
             });
         } else {
@@ -177,13 +176,16 @@ export class BoardControl extends Control<{}> {
         this.updateLaneInput();
         this.updateDoneInput();
         this.updateColumnIndexButton();
+        VSS.resize();
     }
 
     private refreshWI() {
-        WorkItemFormService.getService().then(service => {
+        return WorkItemFormService.getService().then(service => {
             if (service["refresh"] instanceof Function) {
                 service["refresh"]();
+                return true;
             }
+            return false;
         });
     }
 
@@ -214,8 +216,8 @@ export class BoardControl extends Control<{}> {
                 },
                 blur: function (this: Combo) {
                     if (!this.isDropVisible()) {
-                        VSS.resize(window.innerWidth, startHeight);
-                    }
+                        VSS.resize();
+                }
                 },
                 focus: function (this: Combo) {
                     if (!this.isDropVisible()) {
@@ -229,10 +231,10 @@ export class BoardControl extends Control<{}> {
                 if (this.laneInput.isDropVisible()) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).rows.length);
                     const above = this.laneInput._element.position().top + this.laneInput._element.height();
-                    const height = Math.max(startHeight, above + 23 * itemsShown + 5);
+                    const height = Math.max(startHeight(), above + 23 * itemsShown + 5);
                     VSS.resize(window.innerWidth, height);
                 } else {
-                    VSS.resize(window.innerWidth, startHeight);
+                    VSS.resize();
                 }
             });
         } else {
@@ -294,6 +296,7 @@ export class BoardControl extends Control<{}> {
             );
             button.removeAttr("disabled");
             button.attr("title", "Move to top");
+            VSS.resize();
         }
         const updateFailure = (error) => {
             const message: string = (error && error.message) ||
@@ -302,6 +305,7 @@ export class BoardControl extends Control<{}> {
             $(".board-error", this._element).text(message);
             button.text("Could not load position");
             trackEvent("saveFailure", {message, type: "columnIndex"});
+            VSS.resize();
         }
         this.boardModel.getColumnIndex(this.team).then(updateForIndex, updateFailure);
     }
