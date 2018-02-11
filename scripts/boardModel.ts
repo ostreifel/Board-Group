@@ -15,6 +15,7 @@ const projectField = "System.TeamProject";
 const witField = "System.WorkItemType";
 const areaPathField = "System.AreaPath";
 const stateField = "System.State";
+const stackRankField = "Microsoft.VSTS.Common.StackRank";
 
 interface ITeamBoard {
     teamName: string;
@@ -212,5 +213,62 @@ export class BoardModel {
                 return void 0;
             }
         );
+    }
+    private getAllowedStates(team: string = "", witName = ""): string[] {
+        const states: string[] = [];
+        const {allowedMappings} = this.getTeamBoard(team).board;
+        for (const columnGroup in allowedMappings) {
+            for (const mappedWit in allowedMappings[columnGroup]) {
+                if (witName && witName !== mappedWit) {
+                    continue;
+                }
+                states.push(...allowedMappings[columnGroup][mappedWit]);
+            }
+        }
+        return states;
+    }
+
+    public getColumnIndex(team: string = "", move?: "move to top"): PromiseLike<number> {
+        const {columnField, doneField, rowField} = this.getTeamBoard(team).board.fields;
+        const colName = columnField.referenceName;
+        const doneName = doneField.referenceName;
+        const rowName = rowField.referenceName;
+        const {fields} = this.workItem;
+        const states = this.getAllowedStates(team);
+        const query = `
+SELECT
+        System.Id
+FROM workitems
+WHERE
+        [System.TeamProject] = @project
+        and System.AreaPath = "${fields[areaPathField]}"
+        and ${colName} = "${fields[colName]}"
+        and ${doneName} = ${fields[doneName] || false}
+        and ${rowName} = "${fields[rowName] || ""}"
+        and ${stateField} in (${states.map((s) => `'${s}'`).join(",")})
+ORDER BY Microsoft.VSTS.Common.StackRank
+`;
+        return getWITClient().queryByWiql({query}, VSS.getWebContext().project.name).then((results) => {
+            const ids = results.workItems.map(({id}) => id);
+            if (ids.length < 0) {
+                return Q(-1);
+            }
+            const pos = ids.indexOf(this.workItem.id);
+            if (!move || pos === 0) {
+                return Q(pos);
+            }
+            return getWITClient().getWorkItem(ids[0], [stackRankField]).then((wi) => {
+                const newStackRank = wi.fields[stackRankField] - 1;
+                const update: JsonPatchDocument & JsonPatchOperation[] = [{
+                    op: Operation.Add,
+                    path: `/fields/${stackRankField}`,
+                    value: newStackRank,
+                } as JsonPatchOperation];
+                return getWITClient().updateWorkItem(update, this.workItem.id).then((updatedWi) => {
+                    this.workItem = updatedWi;
+                    return pos;
+                })
+            })
+        })
     }
 }

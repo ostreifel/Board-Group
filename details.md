@@ -34,7 +34,8 @@ Within the same Weblayout choose a Section element and add
 
 
 # Change Log
-(02/10/17) 2.4.70 Show error message when update fails on form.
+(02/10/17) 2.5.1 Show column position and add move to top action
+(02/10/17) 2.4.70 Show error message when update fails on form
 (04/24/17) 2.4.44 Filter out inactive boards  
 (04/24/17) 2.4.35 Allow team to be selected from form  
 (04/22/17) 2.4.1 Bulk edit of from queries and backlogs views  

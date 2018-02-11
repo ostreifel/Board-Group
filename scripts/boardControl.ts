@@ -9,7 +9,8 @@ import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import * as Q from "q";
 
-const startHeight = 175;
+let updateColunIndexCounter = 0;
+const startHeight = 190;
 const id = "System.Id";
 const wit = "System.WorkItemType";
 const areaPath = "System.AreaPath";
@@ -82,8 +83,7 @@ export class BoardControl extends Control<{}> {
             (error && error["value"] && error["value"]["message"]) ||
             error + "";
         $(".board-error", this._element).text(message);
-        trackEvent("saveFailure", {message});
-        console.log("save failure", error);
+        trackEvent("saveFailure", {message, type: "boardField"});
     }
 
     private updateForBoard() {
@@ -171,10 +171,12 @@ export class BoardControl extends Control<{}> {
         }
         this._element.append(`<div class="lane-input" />`);
         this._element.append(`<div class="done-input" />`);
+        this._element.append(`<div class="col-index-input" />`);
         this._element.append(`<div class="disclaimer">Board changes are saved immediately.</div>`);
         this._element.append(`<div class="board-error"></div>`);
         this.updateLaneInput();
         this.updateDoneInput();
+        this.updateColumnIndexButton();
     }
 
     private refreshWI() {
@@ -267,6 +269,41 @@ export class BoardControl extends Control<{}> {
         } else {
             this.doneInput = null;
         }
+    }
+
+    private updateColumnIndexButton() {
+        const container = $(".col-index-input", this._element);
+        container.empty();
+        const start = ++updateColunIndexCounter;
+        container.append($("<label/>").addClass("workitemcontrol-label").text("Column Position"));
+        const button = $("<button/>").text("Loading position...").attr("disabled", "");
+        container.append(button);
+        const updateForIndex = (index: number) => {
+            if (start !== updateColunIndexCounter) {
+                return;
+            }
+            const posText = index >= 0 ? index + 1 + "" : "Position not found";
+            button.text(posText);
+            if (index <= 0) {
+                button.attr("disabled", "");
+                return;
+            }
+            button.unbind("click");
+            button.click(() =>
+                this.boardModel.getColumnIndex(this.team, "move to top").then(() => this.updateColumnIndexButton())
+            );
+            button.removeAttr("disabled");
+            button.attr("title", "Move to top");
+        }
+        const updateFailure = (error) => {
+            const message: string = (error && error.message) ||
+                (error && error["value"] && error["value"]["message"]) ||
+                error + "";
+            $(".board-error", this._element).text(message);
+            button.text("Could not load position");
+            trackEvent("saveFailure", {message, type: "columnIndex"});
+        }
+        this.boardModel.getColumnIndex(this.team).then(updateForIndex, updateFailure);
     }
 
     private getLaneInputValue(): string | null {
