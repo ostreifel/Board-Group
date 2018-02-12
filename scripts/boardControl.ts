@@ -94,7 +94,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {
-                    boardControl.boardModel.save(undefined, "columnField", columnValue)
+                    boardControl.boardModel.save(boardControl.team, "columnField", columnValue)
                     .then(
                         boardControl.onModelSaveSuccess,
                         boardControl.onModelSaveFailure);
@@ -205,7 +205,7 @@ export class BoardControl extends Control<{}> {
                 change: function () {
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
-                        boardControl.boardModel.save(undefined, "rowField", laneValue)
+                        boardControl.boardModel.save(boardControl.team, "rowField", laneValue)
                         .then(
                             boardControl.onModelSaveSuccess,
                             boardControl.onModelSaveFailure);
@@ -251,7 +251,7 @@ export class BoardControl extends Control<{}> {
             change: function () {
                 const doneValue = boardControl.getDoneInputValue();
                 if (typeof doneValue === "boolean") {
-                    boardControl.boardModel.save(undefined, "doneField", doneValue)
+                    boardControl.boardModel.save(boardControl.team, "doneField", doneValue)
                     .then(
                         boardControl.onModelSaveSuccess,
                         boardControl.onModelSaveFailure);
