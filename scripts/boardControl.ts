@@ -83,6 +83,7 @@ export class BoardControl extends Control<{}> {
             error + "";
         $(".board-error", this._element).text(message);
         trackEvent("saveFailure", {message, type: "boardField"});
+        VSS.resize();
     }
 
     private updateForBoard() {
