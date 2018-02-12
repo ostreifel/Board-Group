@@ -232,6 +232,7 @@ export class BoardModel {
         const rowName = rowField.referenceName;
         const {fields} = this.workItem;
         const states = this.getAllowedStates(board);
+        const workItemTypes = Object.keys(board.columns[0].stateMappings)
         const query = `
 SELECT
         System.Id
@@ -243,6 +244,7 @@ WHERE
         and ${doneName} = ${fields[doneName] || false}
         and ${rowName} = "${fields[rowName] || ""}"
         and ${stateField} in (${states.map((s) => `'${s}'`).join(",")})
+        and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
 ORDER BY Microsoft.VSTS.Common.StackRank
 `;
         return getWITClient().queryByWiql({query}, VSS.getWebContext().project.name).then((results) => {
