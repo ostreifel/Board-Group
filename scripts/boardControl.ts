@@ -3,7 +3,7 @@ import { Combo, IComboOptions } from "VSS/Controls/Combos";
 import { BoardColumnType } from "TFS/Work/Contracts";
 import { IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { BoardModel } from "./boardModel";
+import { BoardModel, IPosition } from "./boardModel";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
@@ -279,24 +279,35 @@ export class BoardControl extends Control<{}> {
         container.empty();
         const start = ++updateColunIndexCounter;
         container.append($("<label/>").addClass("workitemcontrol-label").text("Column Position"));
-        const button = $("<button/>").text("Loading position...").attr("disabled", "");
-        container.append(button);
-        const updateForIndex = (index: number) => {
+        const pos = $("<span/>").text("Loading position...");
+        const upButton = $("<button class='up' disabled title='Move to top'/>");
+        const downButton = $("<button class='down' disabled title='Move to top'/>");
+        container.append(pos).append(upButton).append(downButton);
+        const updateForIndex = (index: IPosition) => {
             if (start !== updateColunIndexCounter) {
                 return;
             }
-            const posText = index >= 0 ? index + 1 + "" : "Position not found";
-            button.text(posText);
-            if (index <= 0) {
-                button.attr("disabled", "");
+            const posText = index.val >= 0 ? `${index.val + 1}/${index.total}` : "Position not found";
+            pos.text(posText);
+            if (index.val < 0) {
                 return;
             }
-            button.unbind("click");
-            button.click(() =>
+            upButton.unbind("click");
+            upButton.click(() =>
                 this.boardModel.getColumnIndex(this.team, "move to top").then(() => this.updateColumnIndexButton())
             );
-            button.removeAttr("disabled");
-            button.attr("title", "Move to top");
+            if (index.val !== 0) {
+                upButton.removeAttr("disabled");
+            }
+            downButton.unbind("click");
+            downButton.click(() =>
+                this.boardModel.getColumnIndex(this.team, "move to bottom").then(() => this.updateColumnIndexButton())
+            );
+            if (index.val + 1 !== index.total) {
+                downButton.removeAttr("disabled");
+            } else {
+                console.log("")
+            }
             VSS.resize();
         }
         const updateFailure = (error) => {
@@ -304,7 +315,7 @@ export class BoardControl extends Control<{}> {
                 (error && error["value"] && error["value"]["message"]) ||
                 error + "";
             $(".board-error", this._element).text(message);
-            button.text("Could not load position");
+            pos.text("Could not load position");
             trackEvent("saveFailure", {message, type: "columnIndex"});
             VSS.resize();
         }

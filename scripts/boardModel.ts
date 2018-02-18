@@ -23,6 +23,11 @@ interface ITeamBoard {
     haveWiData?: boolean;
 }
 
+export interface IPosition {
+    val: number;
+    total: number;
+}
+
 let firstRefresh = true;
 export class BoardModel {
     public static create(id: number, location: string): IPromise<BoardModel> {
@@ -224,7 +229,7 @@ export class BoardModel {
         return states;
     }
 
-    public getColumnIndex(team: string = "", move?: "move to top"): PromiseLike<number> {
+    public getColumnIndex(team: string = "", move?: "move to top" | "move to bottom"): PromiseLike<IPosition> {
         const {board} = this.getTeamBoard(team);
         const {columnField, doneField, rowField} = board.fields;
         const colName = columnField.referenceName;
@@ -250,15 +255,17 @@ ORDER BY Microsoft.VSTS.Common.StackRank
         return getWITClient().queryByWiql({query}, VSS.getWebContext().project.name).then((results) => {
             const ids = results.workItems.map(({id}) => id);
             if (ids.length < 0) {
-                return Q(-1);
+                return Q({val: -1, total: 0} as IPosition);
             }
-            const pos = ids.indexOf(this.workItem.id);
-            if (!move || pos === 0) {
+            const pos: IPosition = {val: ids.indexOf(this.workItem.id), total: ids.length};
+            if (!move || (move === "move to top" && pos.val === 0)) {
                 return Q(pos);
             }
-            trackEvent("UpdateBoardField", { field: "colPos", location: this.location });
-            return getWITClient().getWorkItem(ids[0], [stackRankField]).then((wi) => {
-                const newStackRank = wi.fields[stackRankField] - 1;
+            trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
+            const idx = move === "move to top" ? 0 : ids[ids.length - 1];
+            return getWITClient().getWorkItem(ids[idx], [stackRankField]).then((wi) => {
+                const offset = move === "move to top" ? -1 : 1;
+                const newStackRank = wi.fields[stackRankField] + offset;
                 const update: JsonPatchDocument & JsonPatchOperation[] = [{
                     op: Operation.Add,
                     path: `/fields/${stackRankField}`,

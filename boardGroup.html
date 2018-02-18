@@ -94,12 +94,23 @@
         /* .disclaimer {
             margin-top: 10px;
         } */
-        .board-group .board-control .col-index-input button:disabled {
-            background-color: transparent;
-            border: none;
-            color: black;
-            padding: 0;
-            cursor: default;
+        .board-group .board-control .col-index-input > button {
+            height: 18px;
+            width: 18px;
+            padding: 0px;
+            margin: 0 3px;
+        }
+        .col-index-input button.up {
+            background: url('img/topIcon.png');
+        }
+        .col-index-input button.down {
+            background: url('img/bottomIcon.png');
+        }
+        .col-index-input button.up:disabled {
+            background: url('img/topIconDisabled.png');
+        }
+        .col-index-input button.down:disabled {
+            background: url('img/bottomIconDisabled.png');
         }
         .board-error {
             color: red;
