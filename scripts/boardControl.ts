@@ -281,7 +281,7 @@ export class BoardControl extends Control<{}> {
         container.append($("<label/>").addClass("workitemcontrol-label").text("Column Position"));
         const pos = $("<span/>").text("Loading position...");
         const upButton = $("<button class='up' disabled title='Move to top'/>");
-        const downButton = $("<button class='down' disabled title='Move to top'/>");
+        const downButton = $("<button class='down' disabled title='Move to bottom'/>");
         container.append(pos).append(upButton).append(downButton);
         const updateForIndex = (index: IPosition) => {
             if (start !== updateColunIndexCounter) {
