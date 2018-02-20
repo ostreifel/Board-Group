@@ -95,22 +95,26 @@
             margin-top: 10px;
         } */
         .board-group .board-control .col-index-input > button {
-            height: 19px;
+            height: 18px;
             width: 18px;
             padding: 0px;
             margin: 0 3px;
+        }
+        .board-group .board-control .col-index-input > button:not(:hover):not(:focus) {
+            border-color: white;
         }
         .col-index-input button.up {
             background: url('img/topIcon.png');
         }
         .col-index-input button.down {
-            background: url('img/bottomIcon.png');
+            background: url('img/topIcon.png');
+            transform: rotate(180deg)
         }
         .col-index-input button.up:disabled {
-            background: url('img/topIconDisabled.png');
+            opacity: .5;
         }
         .col-index-input button.down:disabled {
-            background: url('img/bottomIconDisabled.png');
+            opacity: .5;
         }
         .board-error {
             color: red;
