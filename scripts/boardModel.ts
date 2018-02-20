@@ -262,7 +262,7 @@ ORDER BY Microsoft.VSTS.Common.StackRank
                 return Q(pos);
             }
             trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
-            const idx = move === "move to top" ? 0 : ids[ids.length - 1];
+            const idx = move === "move to top" ? 0 : ids.length - 1;
             return getWITClient().getWorkItem(ids[idx], [stackRankField]).then((wi) => {
                 const offset = move === "move to top" ? -1 : 1;
                 const newStackRank = wi.fields[stackRankField] + offset;
