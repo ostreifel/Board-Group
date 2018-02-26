@@ -129,7 +129,11 @@ export function rebuildCache(projectId: string, trigger: string): IPromise<ITeam
 const teamNodeCache: { [projectId: string]: CachedValue<ITeamNode> } = {};
 export function getTeamNode(projectId: string): IPromise<ITeamNode> {
     if (!(projectId in teamNodeCache)) {
-        teamNodeCache[projectId] = new CachedValue<ITeamNode>(() => readNode(projectId).then(node => node || rebuildCache(projectId, "empty")));
+        teamNodeCache[projectId] = new CachedValue<ITeamNode>(() =>
+            readNode(projectId).then((node) =>
+                Q(node) || rebuildCache(projectId, "empty")
+            )
+        );
     }
     return teamNodeCache[projectId].getValue();
 }
@@ -142,9 +146,9 @@ export function getTeamNode(projectId: string): IPromise<ITeamNode> {
  * @param areaPath 
  */
 export function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): IPromise<ITeam[]> {
-    return getTeamNode(projectId).then((node: ITeamNode) => {
+    return getTeamNode(projectId).then((node: ITeamNode): IPromise<ITeam[]> => {
         try {
-            return getTeamsForAreaPath(areaPath, node);
+            return Q(getTeamsForAreaPath(areaPath, node));
         } catch (e) {
             if (e instanceof Error && e.name === "PathNotFound") {
                 return rebuildCache(projectId, "areapath miss").then(node => {

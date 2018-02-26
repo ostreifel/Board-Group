@@ -30,12 +30,9 @@ export interface IPosition {
 
 let firstRefresh = true;
 export class BoardModel {
-    public static create(id: number, location: string): IPromise<BoardModel> {
-        const boardModel = new BoardModel(location);
+    public static create(id: number, location: string, team?: string): IPromise<BoardModel> {
+        const boardModel = new BoardModel(location, team);
         return boardModel.refresh(id).then(() => boardModel);
-    }
-    public getWorkItemId() {
-        return this.workItem.id;
     }
     public getBoard(team?: string) {
         const teamBoard = this.getTeamBoard(team);
@@ -82,27 +79,18 @@ export class BoardModel {
         if (!teamBoard) {
             return [];
         }
-        const state = this.workItem.fields[stateField] || "";
-        if (state in this.workItemType.transitions) {
-            const nextStates = this.workItemType.transitions[state].map((t) => t.to).reduce(
-                (arr, val) => {arr[val] = undefined; return arr}, {} as {[state: string]: void}
-            );
-            return teamBoard.board.columns.filter((c) => {
-                return c.stateMappings[this.workItemType.name] in nextStates;
-            })
-        }
         return teamBoard.board.columns;
     }
     public projectName: string;
 
     private boards: ITeamBoard[];
-    private teams: ITeam[];
+    private teams: string[];
     private refreshTimings: Timings;
     private fieldTimings: Timings = new Timings();
 
     private workItem: WorkItem;
     private workItemType: WorkItemType;
-    private constructor(readonly location) { }
+    private constructor(readonly location: string, readonly knownTeam: string) { }
 
     private completedRefresh() {
         this.refreshTimings.measure("totalTime", false);
@@ -134,32 +122,43 @@ export class BoardModel {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
         
+        const getTeams = () => {
+            if (this.knownTeam) {
+                return Q([this.knownTeam]);
+            }
+            return getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField])
+                .then(teams => teams.map(({name}) => name));
+        };
+        const getIsBoardEnabled = (team: string) => {
+            if (this.knownTeam) {
+                return Q(() => true);
+            }
+            return getEnabledBoards(this.projectName, team);
+        }
         return getWITClient().getWorkItem(workItemId).then(wi => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.projectName = wi.fields[projectField];
             return Q.all(
                 [
-                    getTeamsForAreaPathFromCache(this.projectName, wi.fields[areaPathField]),
-                    getWorkItemType(this.projectName, wi.fields[witField])
+                    getTeams(),
                 ]
-            ).then(([teams, wit]) => {
-                this.workItemType = wit;
+            ).then(([teams]) => {
                 this.refreshTimings.measure("cacheRead");
                 this.teams = teams;
                 if (teams.length === 0) {
                     this.completedRefresh();
                     return;
                 }
-                return Q.all(teams.map(t => Q.all([
-                    getBoardReferences(this.projectName, t.name),
-                    getEnabledBoards(this.projectName, t.name)
+                return Q.all(teams.map(team => Q.all([
+                    getBoardReferences(this.projectName, team),
+                    getIsBoardEnabled(team),
                 ]).then(
                     ([references, isBoardEnabled]) => {
                         return Q.all(references.filter(r => isBoardEnabled(r.name))
-                            .map(r => getBoard(this.projectName, t.name, r.id)))
+                            .map(r => getBoard(this.projectName, team, r.id)))
                             .then(boards => {
-                                return this.findAssociatedBoard(t.name, boards);
+                                return this.findAssociatedBoard(team, boards);
                             });
                     }
                     ))).then(teamBoards => {
@@ -173,8 +172,8 @@ export class BoardModel {
     }
 
     private findAssociatedBoard(teamName: string, boards: Board[]): ITeamBoard {
+        const state = this.workItem.fields[stateField];
         const [board] = boards.filter(b => {
-            const state = this.workItem.fields[stateField];
             return this.getAllowedStates(b, this.workItem.fields[witField]).indexOf(state) >= 0;
         });
         return {

@@ -82,8 +82,10 @@ function commonBoards(boardModels: BoardModel[]): string[] {
 
 function createMenuItems(workItemIds: number[]): IPromise<IContributedMenuItem[]> {
     const location = VSS.getContribution().id.match("board-query-bulk-edit$") ? "query" : "backlogs";
+    /** Board will always exist if on backlogs */
+    const knownTeam = location === "backlogs" ? VSS.getWebContext().team.name : "";
     const timings = new Timings();
-    return Q.all(workItemIds.map(id => BoardModel.create(id, location))).then((boardModels: BoardModel[]) => {
+    return Q.all(workItemIds.map(id => BoardModel.create(id, location, knownTeam))).then((boardModels: BoardModel[]) => {
         const teamToBoard: IBoardMappings = {};
         const boardIds = commonBoards(boardModels);
         for (let boardModel of boardModels) {

@@ -3,7 +3,8 @@ import { menuItemsFromBoard } from "./boardMenuItems";
 
 interface IBoardContext {
     id: number;
-    workItemType;
+    workItemType: string;
+    updateMenuItems?: (items: IContributedMenuItem[]) => IPromise<void>;
 }
 const menuAction: Partial<IContributedMenuSource> = {
     getMenuItems: (context: IBoardContext) => {
@@ -11,9 +12,11 @@ const menuAction: Partial<IContributedMenuSource> = {
             return [];
         }
 
-        return BoardModel.create(context.id, "card").then(boardModel =>
-            // No need to check if on wi board when opening contextmenu from wi on the board.
-            menuItemsFromBoard(VSS.getWebContext().team.name, boardModel))
+        // No need to check if on wi board when opening contextmenu from wi on the board.
+        const team = VSS.getWebContext().team.name;
+        return BoardModel.create(context.id, "card", team).then(boardModel =>
+            menuItemsFromBoard(team, boardModel)
+        );
     }
 };
 
