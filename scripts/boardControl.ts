@@ -196,8 +196,7 @@ export class BoardControl extends Control<{}> {
         const columnValue = this.getColumnInputValue();
         const column = this.boardModel.getBoard(this.team).columns.filter((c) => c.name === columnValue)[0];
         if (this.boardModel.getBoard(this.team).rows.length > 1
-            && column.columnType !== BoardColumnType.Incoming
-            && column.columnType !== BoardColumnType.Outgoing) {
+            && column.columnType === BoardColumnType.InProgress) {
             const boardControl = this;
             const laneOptions: IComboOptions = {
                 value: this.boardModel.getRow(this.team) || "(Default Lane)",

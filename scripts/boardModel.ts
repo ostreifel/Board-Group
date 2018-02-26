@@ -1,5 +1,5 @@
 import { getBoard, getBoardReferences } from "./boardCache";
-import { Board, BoardColumn } from "TFS/Work/Contracts";
+import { Board, BoardColumn, BoardColumnType } from "TFS/Work/Contracts";
 import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 import { WorkItem, WorkItemType } from "TFS/WorkItemTracking/Contracts";
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
@@ -237,6 +237,7 @@ export class BoardModel {
         const {fields} = this.workItem;
         const states = this.getAllowedStates(board);
         const workItemTypes = Object.keys(board.columns[0].stateMappings)
+        const [column] = board.columns.filter((c) => c.name === fields[colName]);
         const query = `
 SELECT
         System.Id
@@ -245,8 +246,14 @@ WHERE
         [System.TeamProject] = @project
         and System.AreaPath = "${fields[areaPathField]}"
         and ${colName} = "${fields[colName]}"
-        and ${doneName} = ${fields[doneName] || false}
-        and ${rowName} = "${fields[rowName] || ""}"
+        ${
+            column.isSplit ?
+            `and ${doneName} = ${fields[doneName] || false}` : ""
+        }
+        ${
+            column.columnType === BoardColumnType.InProgress ?
+            `and ${rowName} = "${fields[rowName] || ""}"` : ""
+        }
         and ${stateField} in (${states.map((s) => `'${s}'`).join(",")})
         and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
 ORDER BY Microsoft.VSTS.Common.StackRank
