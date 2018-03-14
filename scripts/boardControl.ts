@@ -8,6 +8,7 @@ import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import * as Q from "q";
+import { HostNavigationService } from "VSS/SDK/Services/Navigation";
 
 let updateColunIndexCounter = 0;
 const startHeight = () => $(".board-control").height();
@@ -21,11 +22,13 @@ export class BoardControl extends Control<{}> {
     private boardModel: BoardModel;
     private team: string;
     private clickTiming: Timings = new Timings();
-
+    
     // ui
     private columnInput: Combo | null;
     private laneInput: Combo | null;
     private doneInput: Combo | null;
+
+    private _navigationService: HostNavigationService;
 
     private updatePreferredTeam(team: string) {
         WorkItemFormService.getService().then(service => {
@@ -45,8 +48,10 @@ export class BoardControl extends Control<{}> {
     }
 
     public refresh() {
-        WorkItemFormService.getService().then(service => {
-            service.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
+        
+        Q.all([WorkItemFormService.getService(), VSS.getService<HostNavigationService>(VSS.ServiceIds.Navigation)]).then(([formService, navigationService]) => {
+            this._navigationService = navigationService;
+            formService.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
                 this.wiId = fields[id] as number;
                 const refreshUI = () => {
                     if (this.boardModel.getColumn(this.team)) {
@@ -130,9 +135,12 @@ export class BoardControl extends Control<{}> {
                 title: "Navigate to board"
             })
             // .prepend(`<span class="bowtie-icon bowtie-link"></span>`)
-            .click(() => {
+            .click((e) => {
                 this.clickTiming.measure("timeToClick", false);
                 trackEvent("boardLinkClick", {}, this.clickTiming.measurements);
+                this._navigationService.openNewWindow(boardUrl, "");
+                e.stopPropagation();
+                e.preventDefault();
             });
         this._element.append(boardLink);
         const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().sort().map(t =>
