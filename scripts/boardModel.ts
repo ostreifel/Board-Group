@@ -122,9 +122,9 @@ export class BoardModel {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
         
-        const getTeams = () => {
+        const getTeams = (): IPromise<string[]> => {
             if (this.knownTeam) {
-                return Q([this.knownTeam]);
+                return Q<string[]>([this.knownTeam]);
             }
             return getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField])
                 .then(teams => teams.map(({name}) => name));
@@ -135,13 +135,13 @@ export class BoardModel {
             }
             return getEnabledBoards(this.projectName, team);
         }
-        return getWITClient().getWorkItem(workItemId).then(wi => {
+        return getWITClient().getWorkItem(workItemId).then((wi) => {
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.projectName = wi.fields[projectField];
             return Q.all(
                 [
-                    getTeams(),
+                    getTeams() as IPromise<string[]>,
                 ]
             ).then(([teams]) => {
                 this.refreshTimings.measure("cacheRead");
@@ -191,7 +191,7 @@ export class BoardModel {
         if (!this.getBoard(team)) {
             console.warn(`Save called on ${field} with ${val} when board not set`);
             trackEvent("saveError", { field, location: this.location });
-            return Q(null).then(() => void 0);
+            return Q<void>(null) as IPromise<void>;
         }
         this.fieldTimings.measure("timeToClick");
         trackEvent("UpdateBoardField", { field, location: this.location }, this.fieldTimings.measurements);

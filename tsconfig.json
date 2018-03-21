@@ -9,8 +9,7 @@
         "baseUrl": ".",
         "rootDir": "./scripts",
         "typeRoots": [
-            "./typings",
-            "./node_modules/@types"
+            "./node_modules/"
         ]
     }
 }

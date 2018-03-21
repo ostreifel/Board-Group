@@ -24,6 +24,7 @@ export class BoardControl extends Control<{}> {
     private clickTiming: Timings = new Timings();
     
     // ui
+    private readonly: boolean;
     private columnInput: Combo | null;
     private laneInput: Combo | null;
     private doneInput: Combo | null;
@@ -96,6 +97,7 @@ export class BoardControl extends Control<{}> {
         const columnOptions: IComboOptions = {
             value: this.boardModel.getColumn(this.team),
             source: this.boardModel.getValidColumns(this.team).map((c) => c.name),
+            enabled: !this.readonly,
             change: function () {
                 const columnValue = boardControl.getColumnInputValue();
                 if (columnValue) {
@@ -209,6 +211,7 @@ export class BoardControl extends Control<{}> {
             const laneOptions: IComboOptions = {
                 value: this.boardModel.getRow(this.team) || "(Default Lane)",
                 source: this.boardModel.getBoard(this.team).rows.map((r) => r.name || "(Default Lane)"),
+                enabled: !this.readonly,
                 change: function () {
                     const laneValue = boardControl.getLaneInputValue();
                     if (laneValue) {
@@ -255,6 +258,7 @@ export class BoardControl extends Control<{}> {
         const doneOptions: IComboOptions = {
             value: this.boardModel.getDoing(this.team) ? "True" : "False",
             source: ["True", "False"],
+            enabled: !this.readonly,
             change: function () {
                 const doneValue = boardControl.getDoneInputValue();
                 if (typeof doneValue === "boolean") {
@@ -303,14 +307,14 @@ export class BoardControl extends Control<{}> {
             upButton.click(() =>
                 this.boardModel.getColumnIndex(this.team, "move to top").then(() => this.updateColumnIndexButton())
             );
-            if (index.val !== 0) {
+            if (index.val !== 0 && !this.readonly) {
                 upButton.removeAttr("disabled");
             }
             downButton.unbind("click");
             downButton.click(() =>
                 this.boardModel.getColumnIndex(this.team, "move to bottom").then(() => this.updateColumnIndexButton())
             );
-            if (index.val + 1 !== index.total) {
+            if (index.val + 1 !== index.total && !this.readonly) {
                 downButton.removeAttr("disabled");
             } else {
                 console.log("")
@@ -352,6 +356,7 @@ export class BoardControl extends Control<{}> {
     }
 
     public onLoaded(loadedArgs: IWorkItemLoadedArgs) {
+        this.readonly = loadedArgs["isReadOnly"];
         if (loadedArgs.isNew) {
             this._element.html(`<div class="new-wi-message">Save the work item to see board data</div>`);
         } else {
