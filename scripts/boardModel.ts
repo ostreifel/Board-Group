@@ -29,8 +29,8 @@ export interface IPosition {
 
 let firstRefresh = true;
 export class BoardModel {
-    public static async create(id: number, location: string, team?: string): Promise<BoardModel> {
-        const boardModel = new BoardModel(location, team);
+    public static async create(id: number, location: string, team?: string, readonly?: boolean): Promise<BoardModel> {
+        const boardModel = new BoardModel(location, team, readonly);
         await boardModel.refresh(id);
         return boardModel;
     }
@@ -90,7 +90,7 @@ export class BoardModel {
 
     private workItem: WorkItem;
     private workItemType: WorkItemType;
-    private constructor(readonly location: string, readonly knownTeam: string) { }
+    private constructor(readonly location: string, readonly knownTeam: string, readonly readonly: boolean) { }
 
     private completedRefresh() {
         this.refreshTimings.measure("totalTime", false);
@@ -135,7 +135,8 @@ export class BoardModel {
             }
             return await getEnabledBoards(this.projectName, team);
         }
-        const wi = await getWITClient().getWorkItem(workItemId);
+        const { project } = VSS.getWebContext();
+        const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
         this.refreshTimings.measure("getWorkItem");
         this.workItem = wi;
         this.projectName = wi.fields[projectField];

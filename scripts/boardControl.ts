@@ -56,7 +56,7 @@ export class BoardControl extends Control<{}> {
             projectId: fields[projectId] as string,
             workItemType: fields[wit] as string
         };
-        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]);
+        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, "form", undefined, this.readonly), readTeamPreference(context)]);
         this.boardModel = boardModel;
         this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
 
@@ -300,14 +300,16 @@ export class BoardControl extends Control<{}> {
             }
             upButton.unbind("click");
             upButton.click(() =>
-                this.boardModel.getColumnIndex(this.team, "move to top").then(() => this.updateColumnIndexButton())
+                this.boardModel.getColumnIndex(this.team, "move to top").
+                    then(() => this.updateColumnIndexButton(), updateFailure)
             );
             if (index.val !== 0 && !this.readonly) {
                 upButton.removeAttr("disabled");
             }
             downButton.unbind("click");
             downButton.click(() =>
-                this.boardModel.getColumnIndex(this.team, "move to bottom").then(() => this.updateColumnIndexButton())
+                this.boardModel.getColumnIndex(this.team, "move to bottom").
+                    then(() => this.updateColumnIndexButton(), updateFailure)
             );
             if (index.val + 1 !== index.total && !this.readonly) {
                 downButton.removeAttr("disabled");
@@ -321,7 +323,9 @@ export class BoardControl extends Control<{}> {
                 (error && error["value"] && error["value"]["message"]) ||
                 error + "";
             $(".board-error", this._element).text(message);
-            pos.text("Could not load position");
+            if (!pos.text() || pos.text().match(/\.\.\./)) {
+                pos.text("Could not load position");
+            }
             trackEvent("saveFailure", {message, type: "columnIndex"});
             VSS.resize();
         }

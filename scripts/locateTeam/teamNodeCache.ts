@@ -142,4 +142,5 @@ export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: 
         const newNode = await rebuildCache(projectId, "areapath miss");
         return await getTeamsForAreaPath(areaPath, node) as ITeam[];
     }
+    return teams;
 }

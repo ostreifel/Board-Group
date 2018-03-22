@@ -1,5 +1,7 @@
+/// <reference types="vss-web-extension-sdk" />
+
 import { BoardControl } from "./boardControl";
-import Controls = require("VSS/Controls");
+import * as Controls from "VSS/Controls";
 import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 

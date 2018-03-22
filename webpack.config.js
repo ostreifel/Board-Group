@@ -4,12 +4,12 @@ const path = require("path");
 module.exports = {
     entry: {
         boardGroup: "./scripts/boardGroup.ts",
-        // boardContext: "./scripts/boardContext.ts",
-        // bulkBoardContext: "./scripts/bulkBoardContext.ts"
+        boardContext: "./scripts/boardContext.ts",
+        bulkBoardContext: "./scripts/bulkBoardContext.ts"
     },
     output: {
         libraryTarget: "amd",
-        path: path.resolve(__dirname, "dist"),
+        path: path.resolve(__dirname, "dist", "scripts"),
         filename: "[name].js"
     },
     externals: [{
