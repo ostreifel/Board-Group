@@ -4,19 +4,18 @@ import { menuItemsFromBoard } from "./boardMenuItems";
 interface IBoardContext {
     id: number;
     workItemType: string;
-    updateMenuItems?: (items: IContributedMenuItem[]) => IPromise<void>;
+    updateMenuItems?: (items: IContributedMenuItem[]) => Promise<void>;
 }
 const menuAction: Partial<IContributedMenuSource> = {
-    getMenuItems: (context: IBoardContext) => {
+    getMenuItems: async (context: IBoardContext) => {
         if (!context.id) {
             return [];
         }
 
         // No need to check if on wi board when opening contextmenu from wi on the board.
         const team = VSS.getWebContext().team.name;
-        return BoardModel.create(context.id, "card", team).then(boardModel =>
-            menuItemsFromBoard(team, boardModel)
-        );
+        const boardModel = await BoardModel.create(context.id, "card", team);
+        menuItemsFromBoard(team, boardModel);
     }
 };
 

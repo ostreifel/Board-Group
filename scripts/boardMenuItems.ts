@@ -4,8 +4,8 @@ import { BoardColumnType } from "TFS/Work/Contracts";
 export function menuItemsFromBoard(teamName: string,
     boardModel: BoardModel,
     saveAction?: {
-    (team: string, field: "columnField" | "rowField", val: string): IPromise<void>;
-    (team: string, field: "doneField", val: boolean): IPromise<void>;
+    (team: string, field: "columnField" | "rowField", val: string): Promise<void>;
+    (team: string, field: "doneField", val: boolean): Promise<void>;
 }
 ): IContributedMenuItem[] {
     const columns = boardModel.getBoard(teamName).columns;

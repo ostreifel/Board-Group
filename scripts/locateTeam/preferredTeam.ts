@@ -20,31 +20,30 @@ function toId({ projectId, workItemType, areaPath }: IPreferredTeamContext) {
     return `${projectId}.${workItemType}.${areaPath}`.replace(/\\/g, '-');
 }
 
-export function storeTeamPreference(context: IPreferredTeamContext, team: string): IPromise<string> {
+export async function storeTeamPreference(context: IPreferredTeamContext, team: string): Promise<string> {
     const teamDoc: PreferenceDoc = {
         id: toId(context),
         team,
         formatVersion,
         __etag: -1
     };
-    return VSS.getService(VSS.ServiceIds.ExtensionData).then((dataService: IExtensionDataService) => {
-        return dataService.setDocument(preferredTeamCollection, teamDoc, {scopeType: "User"}).then((doc: PreferenceDoc) => doc.team);
-    });
+    const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+    const doc: PreferenceDoc = await dataService.setDocument(preferredTeamCollection, teamDoc, {scopeType: "User"});
+    return doc.team;
 }
-export function readTeamPreference(context: IPreferredTeamContext): IPromise<string | null> {
-    return VSS.getService(VSS.ServiceIds.ExtensionData).then((dataService: IExtensionDataService) => {
-        return dataService.getDocument(preferredTeamCollection, toId(context), {scopeType: "User"}).then((doc: PreferenceDoc) => {
-            return doc.formatVersion === formatVersion ? doc.team : null;
-        }, (error: TfsError): string | null => {
-            const status = Number(error.status);
-            // If collection has not been created yet;
-            if (status === 404 ||
-                // User does not have permissions
-                status === 401) {
-                return null;
-            }
-            throw error;
-        });
+export async function readTeamPreference(context: IPreferredTeamContext): Promise<string | null> {
+    const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+    return dataService.getDocument(preferredTeamCollection, toId(context), {scopeType: "User"}).then((doc: PreferenceDoc) => {
+        return doc.formatVersion === formatVersion ? doc.team : null;
+    }, (error: TfsError): string | null => {
+        const status = Number(error.status);
+        // If collection has not been created yet;
+        if (status === 404 ||
+            // User does not have permissions
+            status === 401) {
+            return null;
+        }
+        throw error;
     });
 }
 

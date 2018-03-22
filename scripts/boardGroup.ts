@@ -4,11 +4,12 @@ import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionCon
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 
 // save on ctr + s
-$(window).bind("keydown", function (event: JQueryEventObject) {
+$(window).bind("keydown", async (event) => {
     if (event.ctrlKey || event.metaKey) {
         if (String.fromCharCode(event.which).toLowerCase() === "s") {
             event.preventDefault();
-            WorkItemFormService.getService().then((service) => service.beginSaveWorkItem($.noop, $.noop));
+            const service = await WorkItemFormService.getService();
+            service.beginSaveWorkItem($.noop, $.noop);
         }
     }
 });

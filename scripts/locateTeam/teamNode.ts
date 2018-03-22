@@ -64,13 +64,13 @@ export class PathNotFound extends Error {
     }
 }
 
-export function getTeamsForAreaPath(areaPath: string, teamNode: ITeamNode): ITeam[] {
+export function getTeamsForAreaPath(areaPath: string, teamNode: ITeamNode): ITeam[] | PathNotFound {
     const teams: ITeam[] = [];
     const pathParts = toPathParts(areaPath);
     while (pathParts.length > 0) {
         const currPart = pathParts.shift();
         if (!teamNode || currPart !== teamNode.name) {
-            throw new PathNotFound(currPart);
+            return new PathNotFound(currPart);
         }
         for (let ownership of teamNode.owners) {
             if (pathParts.length === 0 || ownership.includeChildren) {

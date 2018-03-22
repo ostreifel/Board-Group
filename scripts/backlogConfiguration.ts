@@ -2,7 +2,6 @@ import { getClient as getWorkClient } from "TFS/Work/RestClient";
 import { TeamSetting, BacklogConfiguration } from "TFS/Work/Contracts";
 import { TeamContext } from "TFS/Core/Contracts";
 import { CachedValue } from "./cachedValue";
-import * as Q from "q";
 
 const settings: {
     [projectName: string]: {
@@ -25,30 +24,29 @@ function loadSettings(projectName: string, teamName: string) {
             teamId: teamName
         };
         settings[projectName][teamName] = {
-            backlogConfigurationData: new CachedValue(() => {
+            backlogConfigurationData: new CachedValue(async () => {
                 if (getWorkClient().getBacklogConfigurations) {
-                    return getWorkClient().getBacklogConfigurations(teamContext);
+                    return await getWorkClient().getBacklogConfigurations(teamContext);
                 } else {
-                    return Q(null);
+                    return null;
                 }
             }),
-            teamSettingsData: new CachedValue(() => getWorkClient().getTeamSettings(teamContext))
+            teamSettingsData: new CachedValue(async () => getWorkClient().getTeamSettings(teamContext))
         };
     }
 }
 
-export function getEnabledBoards(projectName: string, teamName: string): Q.IPromise<(board: string) => boolean> {
+export async function getEnabledBoards(projectName: string, teamName: string): Promise<(board: string) => boolean> {
     loadSettings(projectName, teamName);
     const { backlogConfigurationData, teamSettingsData } = settings[projectName][teamName];
-    return Q.all([
+    const [backlogSettings, teamSettings] = await Promise.all([
         backlogConfigurationData.getValue(),
         teamSettingsData.getValue()
-    ]).then(([backlogSettings, teamSettings]) => {
-        const boards = backlogConfigurationData ? null : [
-            ...backlogSettings.portfolioBacklogs,
-            backlogSettings.requirementBacklog,
-            backlogSettings.taskBacklog
-        ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
-        return (board: string) => !boards || boards.indexOf(board) >= 0;
-    });
+    ]);
+    const boards = backlogConfigurationData ? null : [
+        ...backlogSettings.portfolioBacklogs,
+        backlogSettings.requirementBacklog,
+        backlogSettings.taskBacklog
+    ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
+    return (board: string) => !boards || boards.indexOf(board) >= 0;
 }

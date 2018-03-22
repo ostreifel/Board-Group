@@ -1,5 +1,4 @@
 import { BoardModel } from "./boardModel";
-import * as Q from "q";
 import { menuItemsFromBoard } from "./boardMenuItems";
 import { trackEvent, flushNow } from "./events";
 import { Timings } from "./timings";
@@ -9,10 +8,9 @@ interface IBoardMappings {
     [key: string]: BoardModel[];
 }
 
-const refreshPage = new DelayedFunction(null, 100, "refreshPage", () => {
-    VSS.getService(VSS.ServiceIds.Navigation).then(function (navigationService: IHostNavigationService) {
-        navigationService.reload();
-    });
+const refreshPage = new DelayedFunction(null, 100, "refreshPage", async () => {
+    const navigationService = await VSS.getService<IHostNavigationService>(VSS.ServiceIds.Navigation);
+    navigationService.reload();
 })
 
 function createBacklogItems(teamName: string, boards: BoardModel[]): IContributedMenuItem[] {
@@ -23,15 +21,14 @@ function createBacklogItems(teamName: string, boards: BoardModel[]): IContribute
         }
         boardMap[board.getBoard(teamName).name].push(board);
     }
-    const bulkSave = boardName => (team, field, value) => {
+    const bulkSave = boardName => async (team, field, value) => {
         const bulkTimings = new Timings();
         refreshPage.cancel();
-        return Q.all(boardMap[boardName].map(b => b.save(team, field, value))).then(voids => {
-            bulkTimings.measure("totalTime");
-            trackEvent("bulkUpdate", { workItemCount: String(boardMap[boardName].length) }, bulkTimings.measurements);
-            flushNow();
-            refreshPage.reset();
-        });
+        await Promise.all(boardMap[boardName].map(b => b.save(team, field, value)));
+        bulkTimings.measure("totalTime");
+        trackEvent("bulkUpdate", { workItemCount: String(boardMap[boardName].length) }, bulkTimings.measurements);
+        flushNow();
+        refreshPage.reset();
     }
     if (Object.keys(boardMap).length === 1) {
         const boardName = Object.keys(boardMap)[0];
@@ -80,41 +77,40 @@ function commonBoards(boardModels: BoardModel[]): string[] {
     return Object.keys(boardIds).filter(id => boardIds[id]);
 }
 
-function createMenuItems(workItemIds: number[]): IPromise<IContributedMenuItem[]> {
+async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuItem[]> {
     const location = VSS.getContribution().id.match("board-query-bulk-edit$") ? "query" : "backlogs";
     /** Board will always exist if on backlogs */
     const knownTeam = location === "backlogs" ? VSS.getWebContext().team.name : "";
     const timings = new Timings();
-    return Q.all(workItemIds.map(id => BoardModel.create(id, location, knownTeam))).then((boardModels: BoardModel[]) => {
-        const teamToBoard: IBoardMappings = {};
-        const boardIds = commonBoards(boardModels);
-        for (let boardModel of boardModels) {
-            for (let team of boardModel.getTeams()) {
-                if (!boardIds.some(id => id === boardModel.getBoard(team).id)) {
-                    continue;
-                }
-                if (!(team in teamToBoard)) {
-                    teamToBoard[team] = [];
-                }
-                teamToBoard[team].push(boardModel);
+    const boardModels = await Promise.all(workItemIds.map(id => BoardModel.create(id, location, knownTeam)));
+    const teamToBoard: IBoardMappings = {};
+    const boardIds = commonBoards(boardModels);
+    for (let boardModel of boardModels) {
+        for (let team of boardModel.getTeams()) {
+            if (!boardIds.some(id => id === boardModel.getBoard(team).id)) {
+                continue;
             }
+            if (!(team in teamToBoard)) {
+                teamToBoard[team] = [];
+            }
+            teamToBoard[team].push(boardModel);
         }
-        timings.measure("totalTime");
-        trackEvent("bulkContextMenu", { workItemCount: String(workItemIds.length) }, timings.measurements);
+    }
+    timings.measure("totalTime");
+    trackEvent("bulkContextMenu", { workItemCount: String(workItemIds.length) }, timings.measurements);
 
-        if (Object.keys(teamToBoard).length > 0) {
-            const items = createTeamItems(teamToBoard, boardIds);
-            console.log("menu items", items);
-            return items;
-        } else {
-            const items: IContributedMenuItem[] = [{
-                text: workItemIds.length > 1 ? "No common boards" : "No associated boards",
-                icon: "/img/logoIcon.png",
-                disabled: true
-            }];
-            return items;
-        }
-    });
+    if (Object.keys(teamToBoard).length > 0) {
+        const items = createTeamItems(teamToBoard, boardIds);
+        console.log("menu items", items);
+        return items;
+    } else {
+        const items: IContributedMenuItem[] = [{
+            text: workItemIds.length > 1 ? "No common boards" : "No associated boards",
+            icon: "/img/logoIcon.png",
+            disabled: true
+        }];
+        return items;
+    }
 }
 const actionProvider: IContributedMenuSource = {
     getMenuItems: ({ workItemIds }: { workItemIds: number[] }) => {

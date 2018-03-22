@@ -7,7 +7,6 @@ import { BoardModel, IPosition } from "./boardModel";
 import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
-import * as Q from "q";
 import { HostNavigationService } from "VSS/SDK/Services/Navigation";
 
 let updateColunIndexCounter = 0;
@@ -31,56 +30,53 @@ export class BoardControl extends Control<{}> {
 
     private _navigationService: HostNavigationService;
 
-    private updatePreferredTeam(team: string) {
-        WorkItemFormService.getService().then(service => {
-            service.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
-                const context: IPreferredTeamContext = {
-                    areaPath: fields[areaPath] as string,
-                    projectId: fields[projectId] as string,
-                    workItemType: fields[wit] as string
-                };
-                storeTeamPreference(context, team).then(team => {
-                    trackEvent("preferredTeamUpdated", { teamCount: String(this.boardModel.getTeams().length) });
-                });
-            });
+    private async updatePreferredTeam(team: string) {
+        // don't stop the ui to save preference
+        WorkItemFormService.getService().then(async (service) => {
+            const fields = await service.getFieldValues([id, wit, areaPath, projectId]);
+            const context: IPreferredTeamContext = {
+                areaPath: fields[areaPath] as string,
+                projectId: fields[projectId] as string,
+                workItemType: fields[wit] as string
+            };
+            await storeTeamPreference(context, team);
+            trackEvent("preferredTeamUpdated", { teamCount: String(this.boardModel.getTeams().length) });
         });
         this.team = team;
-        this.refresh();
+        await this.refresh();
     }
 
-    public refresh() {
-        
-        Q.all([WorkItemFormService.getService(), VSS.getService<HostNavigationService>(VSS.ServiceIds.Navigation)]).then(([formService, navigationService]) => {
-            this._navigationService = navigationService;
-            formService.getFieldValues([id, wit, areaPath, projectId]).then(fields => {
-                this.wiId = fields[id] as number;
-                const refreshUI = () => {
-                    if (this.boardModel.getColumn(this.team)) {
-                        this.updateForBoard();
-                    } else {
-                        this.updateNoBoard();
-                    }
-                };
-                const context: IPreferredTeamContext = {
-                    areaPath: fields[areaPath] as string,
-                    projectId: fields[projectId] as string,
-                    workItemType: fields[wit] as string
-                };
-                Q.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]).then(([boardModel, team]) => {
-                    this.boardModel = boardModel;
-                    this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
-                    refreshUI();
-                });
-            });
-        });
+    public async refresh() {
+        const formService = await WorkItemFormService.getService();
+        this._navigationService = await VSS.getService<HostNavigationService>(VSS.ServiceIds.Navigation);
+        const fields = await formService.getFieldValues([id, wit, areaPath, projectId]);
+        this.wiId = fields[id] as number;
+        const context: IPreferredTeamContext = {
+            areaPath: fields[areaPath] as string,
+            projectId: fields[projectId] as string,
+            workItemType: fields[wit] as string
+        };
+        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, "form"), readTeamPreference(context)]);
+        this.boardModel = boardModel;
+        this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
+
+        // update ui
+        if (this.boardModel.getColumn(this.team)) {
+            this.updateForBoard();
+        } else {
+            this.updateNoBoard();
+        }
     }
 
     private updateNoBoard() {
         this._element.html(`<div class="no-board-message">No board found for the current area path</div>`);
     }
 
-    private readonly onModelSaveSuccess = () => {
-        this.refreshWI().then(refreshed => refreshed || this.updateForBoard());
+    private readonly onModelSaveSuccess = async () => {
+        const refreshed = await this.refreshWI();
+        if (!refreshed) {
+            this.updateForBoard();
+        }
     }
     private readonly onModelSaveFailure = (error: TfsError) => {
         this.updateForBoard();
@@ -190,14 +186,13 @@ export class BoardControl extends Control<{}> {
         VSS.resize();
     }
 
-    private refreshWI() {
-        return WorkItemFormService.getService().then(service => {
-            if (service["refresh"] instanceof Function) {
-                service["refresh"]();
-                return true;
-            }
-            return false;
-        });
+    private async refreshWI() {
+        const service = await WorkItemFormService.getService();
+        if (service["refresh"] instanceof Function) {
+            service["refresh"]();
+            return true;
+        }
+        return false;
     }
 
     private updateLaneInput() {
