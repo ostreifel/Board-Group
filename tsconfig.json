@@ -1,21 +1,17 @@
 {
     "compilerOptions": {
-        "module": "amd",
+        "module": "es6",
         "moduleResolution": "node",
         "target": "es5",
         "noImplicitAny": false,
         "jsx": "react",
-        "sourceMap": false,
-        "baseUrl": ".",
-        "rootDir": "./scripts",
-        "typeRoots": [
-            "./node_modules/",
-            "./node_modules/@types"
-        ],
+        "sourceMap": true,
         "lib": [
             "es2015.promise",
             "dom",
-            "es5"
-        ]
+            "es5",
+        ],
+        "rootDir": "scripts",
+        "outDir": "dist"
     }
 }

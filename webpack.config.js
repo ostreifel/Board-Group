@@ -1,13 +1,15 @@
 const webpack = require('webpack');
+const path = require("path");
 
 module.exports = {
     entry: {
-        boardGroup: "./js/boardGroup.js",
-        boardContext: "./js/boardContext.js",
-        bulkBoardContext: "./js/bulkBoardContext.js"
+        boardGroup: "./scripts/boardGroup.ts",
+        // boardContext: "./scripts/boardContext.ts",
+        // bulkBoardContext: "./scripts/bulkBoardContext.ts"
     },
     output: {
         libraryTarget: "amd",
+        path: path.resolve(__dirname, "dist"),
         filename: "[name].js"
     },
     externals: [{
@@ -19,15 +21,14 @@ module.exports = {
         /^VSS\//  // Ignore VSS/* since they are coming from VSTS host
     ],
     resolve: {
+        // alias: { "office-ui-fabric-react": path.join(process.cwd(), 'node_modules', 'office-ui-fabric-react', 'lib-amd') },
+        extensions: [".ts", ".tsx", ".js"],
     },
-    plugins: [
-        new webpack.optimize.UglifyJsPlugin({
-            compress: {
-                warnings: false,
-            },
-            output: {
-                comments: false,
-            },
-        }),
-    ]    
+    devtool: "source-map",
+    module: {
+      rules: [
+        // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
+        { test: /\.tsx?$/, loader: "ts-loader" }
+      ]
+    }
 };

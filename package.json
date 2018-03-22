@@ -2,7 +2,6 @@
   "devDependencies": {
     "@types/applicationinsights-js": "^1.0.2",
     "@types/jquery": "^2.0.41",
-    "@types/react": "^15.0.21",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
     "gulp-rename": "^1.2.2",
@@ -12,7 +11,8 @@
     "gulp-webpack": "^1.5.0",
     "react": "^15.4.0",
     "react-dom": "^15.4.0",
-    "typescript": "^2.0.10",
+    "ts-loader": "^4.1.0",
+    "typescript": "^2.7.2",
     "vss-web-extension-sdk": "^5.131.0",
     "yargs": "^7.0.2"
   },
