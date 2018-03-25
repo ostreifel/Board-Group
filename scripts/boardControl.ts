@@ -70,6 +70,7 @@ export class BoardControl extends Control<{}> {
 
     private updateNoBoard() {
         this._element.html(`<div class="no-board-message">No board found for the current area path</div>`);
+        VSS.resize(window.innerWidth, $(".board-callout").outerHeight() + 16)
     }
 
     private readonly onModelSaveSuccess = async () => {
