@@ -327,7 +327,7 @@ export class BoardControl extends Control<{}> {
             if (!pos.text() || pos.text().match(/\.\.\./)) {
                 pos.text("Could not load position");
             }
-            trackEvent("saveFailure", {message, type: "columnIndex"});
+            trackEvent("saveFailure", {message, type: "columnIndex", stack: error.stack});
             VSS.resize();
         }
         this.boardModel.getColumnIndex(this.team).then(updateForIndex, updateFailure);
