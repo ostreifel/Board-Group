@@ -17,12 +17,6 @@ gulp.task('clean', () => {
         .pipe(clean());
 })
 
-// gulp.task('fix-vss', () => {
-//     // These duplicate type files mess up the build
-//     return gulp.src([`node_modules/vss-web-extension-sdk/node_modules`], {read: false})
-//         .pipe(clean());
-// });
-
 
 gulp.task('copy', ['clean'], () => {
     gulp.src('node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js')

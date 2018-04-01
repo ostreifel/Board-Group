@@ -10,6 +10,17 @@ import { CachedValue } from "../cachedValue";
 import { Timings } from "../timings";
 
 
+async function getTeamsRest(project: string, top: number, skip: number): Promise<WebApiTeam[]> {
+    const client = getCoreClient();
+    const get = client.getTeams.bind(client);
+    if (get.length === 3) {
+        // fallback
+        return get(project, top, skip);
+    }
+    // latest version
+    return get(project, false, top, skip);
+}
+
 async function getTeams(projectId: string): Promise<ITeam[]> {
     let client = getCoreClient();
     let teams: ITeam[] = [];
@@ -17,7 +28,7 @@ async function getTeams(projectId: string): Promise<ITeam[]> {
     let skip = 0;
 
     while (true) {
-        const items = await client.getTeams(projectId, false, top, skip);
+        const items = await getTeamsRest(projectId, 100, skip);
         teams.push(...items.map(i => {
             return {
                 name: i.name,
