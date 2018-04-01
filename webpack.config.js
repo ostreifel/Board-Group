@@ -24,6 +24,7 @@ module.exports = {
         // alias: { "office-ui-fabric-react": path.join(process.cwd(), 'node_modules', 'office-ui-fabric-react', 'lib-amd') },
         extensions: [".ts", ".tsx", ".js"],
     },
+    mode: "development",
     devtool: "source-map",
     module: {
       rules: [
