@@ -135,31 +135,35 @@ export class BoardModel {
             }
             return await getEnabledBoards(this.projectName, team);
         }
-        const { project } = VSS.getWebContext();
-        const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
-        this.refreshTimings.measure("getWorkItem");
-        this.workItem = wi;
-        this.projectName = wi.fields[projectField];
-        const teams = await getTeams();
-        this.refreshTimings.measure("cacheRead");
-        this.teams = teams;
-        if (teams.length === 0) {
+        try {
+            const { project } = VSS.getWebContext();
+            const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
+            this.refreshTimings.measure("getWorkItem");
+            this.workItem = wi;
+            this.projectName = wi.fields[projectField];
+            const teams = await getTeams();
+            this.refreshTimings.measure("cacheRead");
+            this.teams = teams;
+            if (teams.length === 0) {
+                this.completedRefresh();
+                return;
+            }
+            const teamBoards = await Promise.all(teams.map(async (team) => {
+                const [references, isBoardEnabled] = await Promise.all([
+                    getBoardReferences(this.projectName, team),
+                    getIsBoardEnabled(team),
+                ]);
+                const boards = await Promise.all(references.filter(r => isBoardEnabled(r.name))
+                    .map(r => getBoard(this.projectName, team, r.id)));
+                return this.findAssociatedBoard(team, boards);
+            }));
+            this.refreshTimings.measure("getAllBoards");
+    
+            this.boards = teamBoards.filter(t => t.haveWiData);
             this.completedRefresh();
-            return;
+        } catch (e) {
+            trackEvent("refreshFailure", {message: e.message});
         }
-        const teamBoards = await Promise.all(teams.map(async (team) => {
-            const [references, isBoardEnabled] = await Promise.all([
-                getBoardReferences(this.projectName, team),
-                getIsBoardEnabled(team),
-            ]);
-            const boards = await Promise.all(references.filter(r => isBoardEnabled(r.name))
-                .map(r => getBoard(this.projectName, team, r.id)));
-            return this.findAssociatedBoard(team, boards);
-        }));
-        this.refreshTimings.measure("getAllBoards");
-
-        this.boards = teamBoards.filter(t => t.haveWiData);
-        this.completedRefresh();
     }
 
     private findAssociatedBoard(teamName: string, boards: Board[]): ITeamBoard {

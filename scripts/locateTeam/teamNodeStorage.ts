@@ -1,7 +1,7 @@
 import { ITeamNode } from "./teamNode";
 import { trackEvent } from "../events";
 
-const formatVersion = 1;
+const formatVersion = 2;
 const areaCollection = "area-mappings";
 interface NodeDoc {
     id: string;

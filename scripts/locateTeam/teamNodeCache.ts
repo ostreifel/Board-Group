@@ -28,7 +28,7 @@ async function getTeams(projectId: string): Promise<ITeam[]> {
     let skip = 0;
 
     while (true) {
-        const items = await getTeamsRest(projectId, 100, skip);
+        const items = await getTeamsRest(projectId, top, skip);
         teams.push(...items.map(i => {
             return {
                 name: i.name,
