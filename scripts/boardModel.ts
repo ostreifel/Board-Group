@@ -1,20 +1,14 @@
-import { getBoard, getBoardReferences } from "./boardCache";
-import { Board, BoardColumn, BoardColumnType } from "TFS/Work/Contracts";
-import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
-import { WorkItem, WorkItemType } from "TFS/WorkItemTracking/Contracts";
-import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
-import { ITeam } from "./locateTeam/teamNode";
-import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
-import { trackEvent } from "./events";
-import { Timings } from "./timings";
-import { getEnabledBoards } from "./backlogConfiguration";
-import { getWorkItemType } from "./workItemType";
+import { Board, BoardColumn, BoardColumnType } from 'TFS/Work/Contracts';
+import { WorkItem } from 'TFS/WorkItemTracking/Contracts';
+import { getClient as getWITClient } from 'TFS/WorkItemTracking/RestClient';
+import { JsonPatchDocument, JsonPatchOperation, Operation } from 'VSS/WebApi/Contracts';
 
-const projectField = "System.TeamProject";
-const witField = "System.WorkItemType";
-const areaPathField = "System.AreaPath";
-const stateField = "System.State";
-const stackRankField = "Microsoft.VSTS.Common.StackRank";
+import { getEnabledBoards, getOrderFieldName, isClosed } from './backlogConfiguration';
+import { getBoard, getBoardReferences } from './boardCache';
+import { trackEvent } from './events';
+import { areaPathField, closedDateField, projectField, stateField, witField } from './fieldNames';
+import { getTeamsForAreaPathFromCache } from './locateTeam/teamNodeCache';
+import { Timings } from './timings';
 
 interface ITeamBoard {
     teamName: string;
@@ -23,6 +17,7 @@ interface ITeamBoard {
 }
 
 export interface IPosition {
+    isClosed: boolean;
     val: number;
     total: number;
 }
@@ -89,7 +84,6 @@ export class BoardModel {
     private fieldTimings: Timings = new Timings();
 
     private workItem: WorkItem;
-    private workItemType: WorkItemType;
     private constructor(readonly location: string, readonly knownTeam: string, readonly readonly: boolean) { }
 
     private completedRefresh() {
@@ -218,7 +212,7 @@ export class BoardModel {
         }
         return states;
     }
-
+    
     public async getColumnIndex(team: string = "", move?: "move to top" | "move to bottom"): Promise<IPosition> {
         const {board} = this.getTeamBoard(team);
         const {columnField, doneField, rowField} = board.fields;
@@ -226,15 +220,15 @@ export class BoardModel {
         const doneName = doneField.referenceName;
         const rowName = rowField.referenceName;
         const {fields} = this.workItem;
-        const states = this.getAllowedStates(board);
         const workItemTypes = Object.keys(board.columns[0].stateMappings)
         const [column] = board.columns.filter((c) => c.name === fields[colName]);
+        const orderFieldName =  await getOrderFieldName(fields[projectField]);
         const query = `
 SELECT
         System.Id
 FROM workitems
 WHERE
-        [System.TeamProject] = @project
+        [System.TeamProject] = "${fields[projectField]}"
         and System.AreaPath = "${fields[areaPathField]}"
         and ${colName} = "${fields[colName]}"
         ${
@@ -245,27 +239,32 @@ WHERE
             column.columnType === BoardColumnType.InProgress ?
             `and ${rowName} = "${fields[rowName] || ""}"` : ""
         }
-        and ${stateField} in (${states.map((s) => `'${s}'`).join(",")})
+        and ${stateField} in (${this.getAllowedStates(board).map((s) => `'${s}'`).join(",")})
         and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
-ORDER BY Microsoft.VSTS.Common.StackRank
+ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} DESC` : orderFieldName}
 `;
-        const results = await getWITClient().queryByWiql({query}, VSS.getWebContext().project.name);
+        const results = await getWITClient().queryByWiql({query});
         const ids = results.workItems.map(({id}) => id);
         if (ids.length < 0) {
             return {val: -1, total: 0} as IPosition;
         }
-        const pos: IPosition = {val: ids.indexOf(this.workItem.id), total: ids.length};
+        const pos: IPosition = {
+            val: ids.indexOf(this.workItem.id),
+            total: ids.length,
+            isClosed: column.columnType === BoardColumnType.Outgoing,
+            
+        };
         if (!move || (move === "move to top" && pos.val === 0)) {
             return pos;
         }
         trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
         const idx = move === "move to top" ? 0 : ids.length - 1;
-        const wi = await getWITClient().getWorkItem(ids[idx], [stackRankField]);
+        const wi = await getWITClient().getWorkItem(ids[idx], [orderFieldName]);
         const offset = move === "move to top" ? -1 : 1;
-        const newStackRank = wi.fields[stackRankField] + offset;
+        const newStackRank = wi.fields[orderFieldName] + offset;
         const update: JsonPatchDocument & JsonPatchOperation[] = [{
             op: Operation.Add,
-            path: `/fields/${stackRankField}`,
+            path: `/fields/${orderFieldName}`,
             value: newStackRank,
         } as JsonPatchOperation];
         const updatedWi = await getWITClient().updateWorkItem(update, this.workItem.id);

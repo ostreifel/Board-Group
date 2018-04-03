@@ -9,7 +9,7 @@ import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import { HostNavigationService } from "VSS/SDK/Services/Navigation";
 
-let updateColunIndexCounter = 0;
+let updateColumnIndexCounter = 0;
 const startHeight = () => $(".board-control").height();
 const id = "System.Id";
 const wit = "System.WorkItemType";
@@ -151,7 +151,7 @@ export class BoardControl extends Control<{}> {
         const button = $(`
             <button class="board-selector">
                 <img src="img/chevronIcon.png"/>
-            </button>`).click((e) => {
+            </button>`).click((_) => {
                 dropdown.toggle();
                 VSS.resize();
                 trackEvent("teamSwitcherClick", { expand: String(dropdown.is(":visible")) });
@@ -163,7 +163,7 @@ export class BoardControl extends Control<{}> {
         if (this.boardModel.getColumn(this.team)) {
             this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
             this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
-            this.columnInput._bind("dropDownToggled", (event, args: { isDropVisible: boolean }) => {
+            this.columnInput._bind("dropDownToggled", (_, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).columns.length);
                     const above = this.columnInput._element.position().top + this.columnInput._element.height();
@@ -234,8 +234,8 @@ export class BoardControl extends Control<{}> {
             };
             laneElem.append($("<label/>").addClass("workitemcontrol-label").text("Swimlane"));
             this.laneInput = <Combo>BaseControl.createIn(Combo, laneElem, laneOptions);
-            this.laneInput._bind("dropDownToggled focus", (event, args: { isDropVisible: boolean }) => {
-                if (this.laneInput.isDropVisible()) {
+            this.laneInput._bind("dropDownToggled focus", (_, args: { isDropVisible: boolean }) => {
+                if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).rows.length);
                     const above = this.laneInput._element.position().top + this.laneInput._element.height();
                     const height = Math.max(startHeight(), above + 23 * itemsShown + 5);
@@ -284,14 +284,14 @@ export class BoardControl extends Control<{}> {
     private updateColumnIndexButton() {
         const container = $(".col-index-input", this._element);
         container.empty();
-        const start = ++updateColunIndexCounter;
+        const start = ++updateColumnIndexCounter;
         container.append($("<label/>").addClass("workitemcontrol-label").text("Column Position"));
         const pos = $("<span/>").text("Loading position...");
         const upButton = $("<button class='up' disabled title='Move to top'/>");
         const downButton = $("<button class='down' disabled title='Move to bottom'/>");
         container.append(pos).append(upButton).append(downButton);
         const updateForIndex = (index: IPosition) => {
-            if (start !== updateColunIndexCounter) {
+            if (start !== updateColumnIndexCounter) {
                 return;
             }
             const posText = index.val >= 0 ? `${index.val + 1}/${index.total}` : "Position not found";
@@ -307,6 +307,12 @@ export class BoardControl extends Control<{}> {
             if (index.val !== 0 && !this.readonly) {
                 upButton.removeAttr("disabled");
             }
+            if (index.isClosed) {
+                upButton.hide();
+            } else {
+                upButton.show();
+            }
+            
             downButton.unbind("click");
             downButton.click(() =>
                 this.boardModel.getColumnIndex(this.team, "move to bottom").
@@ -314,8 +320,11 @@ export class BoardControl extends Control<{}> {
             );
             if (index.val + 1 !== index.total && !this.readonly) {
                 downButton.removeAttr("disabled");
+            }
+            if (index.isClosed) {
+                downButton.hide();
             } else {
-                console.log("")
+                downButton.show();
             }
             VSS.resize();
         }
@@ -371,7 +380,7 @@ export class BoardControl extends Control<{}> {
         this.refresh();
     }
 
-    public onSaved(args: IWorkItemChangedArgs) {
+    public onSaved(_: IWorkItemChangedArgs) {
         this.refresh();
     }
 }

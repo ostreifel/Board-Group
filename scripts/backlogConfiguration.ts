@@ -1,16 +1,34 @@
-import { getClient as getWorkClient } from "TFS/Work/RestClient";
-import { TeamSetting, BacklogConfiguration } from "TFS/Work/Contracts";
-import { TeamContext } from "TFS/Core/Contracts";
-import { CachedValue } from "./cachedValue";
+import { TeamContext } from 'TFS/Core/Contracts';
+import { BacklogConfiguration, TeamSetting } from 'TFS/Work/Contracts';
+import { getClient as getWorkClient } from 'TFS/Work/RestClient';
+import { projectField, witField, stateField } from './fieldNames';
 
 const settings: {
     [projectName: string]: {
         [teamName: string]: {
-            backlogConfigurationData: CachedValue<BacklogConfiguration | null>
-            teamSettingsData: CachedValue<TeamSetting>
+            backlogConfigurationData: Promise<BacklogConfiguration | null>
+            teamSettingsData: PromiseLike<TeamSetting>
         }
     }
 } = {};
+
+async function hardGetBacklogConfiguration(project: string): Promise<BacklogConfiguration | null> {
+    if (getWorkClient().getBacklogConfigurations) {
+        return await getWorkClient().getBacklogConfigurations({project} as TeamContext);
+    } else {
+        return null;
+    }
+}
+
+const configsMap: {[project: string]: Promise<BacklogConfiguration | null>} = {};
+
+export async function getBacklogConfiguration(project: string): Promise<BacklogConfiguration | null> {
+    if (!configsMap.hasOwnProperty(project)) {
+        configsMap[project] = hardGetBacklogConfiguration(project);
+    }
+    return configsMap[project];
+}
+
 
 function loadSettings(projectName: string, teamName: string) {
     if (!(projectName in settings)) {
@@ -24,14 +42,8 @@ function loadSettings(projectName: string, teamName: string) {
             teamId: teamName
         };
         settings[projectName][teamName] = {
-            backlogConfigurationData: new CachedValue(async () => {
-                if (getWorkClient().getBacklogConfigurations) {
-                    return await getWorkClient().getBacklogConfigurations(teamContext);
-                } else {
-                    return null;
-                }
-            }),
-            teamSettingsData: new CachedValue(async () => getWorkClient().getTeamSettings(teamContext))
+            backlogConfigurationData: getBacklogConfiguration(projectName),
+            teamSettingsData: getWorkClient().getTeamSettings(teamContext)
         };
     }
 }
@@ -40,8 +52,8 @@ export async function getEnabledBoards(projectName: string, teamName: string): P
     loadSettings(projectName, teamName);
     const { backlogConfigurationData, teamSettingsData } = settings[projectName][teamName];
     const [backlogSettings, teamSettings] = await Promise.all([
-        backlogConfigurationData.getValue(),
-        teamSettingsData.getValue()
+        backlogConfigurationData,
+        teamSettingsData
     ]);
     const boards = backlogConfigurationData ? null : [
         ...backlogSettings.portfolioBacklogs,
@@ -49,4 +61,12 @@ export async function getEnabledBoards(projectName: string, teamName: string): P
         backlogSettings.taskBacklog
     ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
     return (board: string) => !boards || boards.indexOf(board) >= 0;
+}
+
+export async function getOrderFieldName(project: string): Promise<string> {
+    const config = await getBacklogConfiguration(project);
+    if (!config) {
+        return "System.";
+    }
+    return config.backlogFields.typeFields.Order;
 }
