@@ -241,7 +241,7 @@ WHERE
         }
         and ${stateField} in (${this.getAllowedStates(board).map((s) => `'${s}'`).join(",")})
         and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
-ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} DESC` : orderFieldName}
+ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} DESC` : orderFieldName}, ID
 `;
         const results = await getWITClient().queryByWiql({query});
         const ids = results.workItems.map(({id}) => id);
