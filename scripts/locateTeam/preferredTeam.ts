@@ -1,6 +1,3 @@
-import { ITeamNode } from "./teamNode";
-import { trackEvent } from "../events";
-
 const formatVersion = 1;
 const preferredTeamCollection = "preferred-team";
 interface PreferenceDoc {

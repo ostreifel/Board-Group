@@ -307,11 +307,7 @@ export class BoardControl extends Control<{}> {
             if (index.val !== 0 && !this.readonly) {
                 upButton.removeAttr("disabled");
             }
-            if (index.isClosed) {
-                upButton.hide();
-            } else {
-                upButton.show();
-            }
+            upButton.css({visibility: index.isClosed ? "hidden" : "show"});
             
             downButton.unbind("click");
             downButton.click(() =>
@@ -321,11 +317,7 @@ export class BoardControl extends Control<{}> {
             if (index.val + 1 !== index.total && !this.readonly) {
                 downButton.removeAttr("disabled");
             }
-            if (index.isClosed) {
-                downButton.hide();
-            } else {
-                downButton.show();
-            }
+            downButton.css({visibility: index.isClosed ? "hidden" : "show"});
             VSS.resize();
         }
         const updateFailure = (error) => {

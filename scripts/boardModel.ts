@@ -3,7 +3,7 @@ import { WorkItem } from 'TFS/WorkItemTracking/Contracts';
 import { getClient as getWITClient } from 'TFS/WorkItemTracking/RestClient';
 import { JsonPatchDocument, JsonPatchOperation, Operation } from 'VSS/WebApi/Contracts';
 
-import { getEnabledBoards, getOrderFieldName, isClosed } from './backlogConfiguration';
+import { getEnabledBoards, getOrderFieldName } from './backlogConfiguration';
 import { getBoard, getBoardReferences } from './boardCache';
 import { trackEvent } from './events';
 import { areaPathField, closedDateField, projectField, stateField, witField } from './fieldNames';

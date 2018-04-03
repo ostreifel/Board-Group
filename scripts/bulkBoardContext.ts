@@ -44,7 +44,7 @@ function createBacklogItems(teamName: string, boards: BoardModel[]): IContribute
     return items;
 }
 
-function createTeamItems(boards: IBoardMappings, boardIds: string[]): IContributedMenuItem[] {
+function createTeamItems(boards: IBoardMappings): IContributedMenuItem[] {
     if (Object.keys(boards).length === 1) {
         const team = Object.keys(boards)[0];
         return createBacklogItems(team, boards[team]);
@@ -100,7 +100,7 @@ async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuI
     trackEvent("bulkContextMenu", { workItemCount: String(workItemIds.length) }, timings.measurements);
 
     if (Object.keys(teamToBoard).length > 0) {
-        const items = createTeamItems(teamToBoard, boardIds);
+        const items = createTeamItems(teamToBoard);
         console.log("menu items", items);
         return items;
     } else {

@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.5.77",
+    "version": "2.5.80",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",

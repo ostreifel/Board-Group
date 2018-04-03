@@ -1,7 +1,6 @@
 import { TeamContext } from 'TFS/Core/Contracts';
 import { BacklogConfiguration, TeamSetting } from 'TFS/Work/Contracts';
 import { getClient as getWorkClient } from 'TFS/Work/RestClient';
-import { projectField, witField, stateField } from './fieldNames';
 
 const settings: {
     [projectName: string]: {

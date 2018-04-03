@@ -1,13 +1,14 @@
-import { getClient as getWorkClient } from "TFS/Work/RestClient";
-import { getClient as getCoreClient } from "TFS/Core/RestClient";
-import { WebApiTeam, TeamContext } from "TFS/Core/Contracts";
-import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
-import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTracking/Contracts";
-import { ITeam, ITeamNode, ITeamAreaPaths, buildTeamNodes, getTeamsForAreaPath, PathNotFound } from "./teamNode";
-import { storeNode, readNode } from "./teamNodeStorage";
-import { trackEvent, IProperties, IMeasurements, ValueWithTimings } from "../events";
-import { CachedValue } from "../cachedValue";
-import { Timings } from "../timings";
+import { TeamContext, WebApiTeam } from 'TFS/Core/Contracts';
+import { getClient as getCoreClient } from 'TFS/Core/RestClient';
+import { getClient as getWorkClient } from 'TFS/Work/RestClient';
+import { TreeStructureGroup, WorkItemClassificationNode } from 'TFS/WorkItemTracking/Contracts';
+import { getClient as getWITClient } from 'TFS/WorkItemTracking/RestClient';
+
+import { CachedValue } from '../cachedValue';
+import { trackEvent, ValueWithTimings } from '../events';
+import { Timings } from '../timings';
+import { buildTeamNodes, getTeamsForAreaPath, ITeam, ITeamAreaPaths, ITeamNode, PathNotFound } from './teamNode';
+import { readNode, storeNode } from './teamNodeStorage';
 
 
 async function getTeamsRest(project: string, top: number, skip: number): Promise<WebApiTeam[]> {
@@ -22,7 +23,6 @@ async function getTeamsRest(project: string, top: number, skip: number): Promise
 }
 
 async function getTeams(projectId: string): Promise<ITeam[]> {
-    let client = getCoreClient();
     let teams: ITeam[] = [];
     const top: number = 200;
     let skip = 0;
@@ -151,7 +151,7 @@ export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: 
     const teams = getTeamsForAreaPath(areaPath, node);
     if (teams instanceof PathNotFound) {
         const newNode = await rebuildCache(projectId, "areapath miss");
-        return await getTeamsForAreaPath(areaPath, node) as ITeam[];
+        return await getTeamsForAreaPath(areaPath, newNode) as ITeam[];
     }
     return teams;
 }
