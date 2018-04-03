@@ -1,11 +1,12 @@
 import { ITeamNode } from "./teamNode";
 import { trackEvent } from "../events";
 
-const formatVersion = 2;
+const formatVersion = 3;
 const areaCollection = "area-mappings";
 interface NodeDoc {
     id: string;
     node: ITeamNode;
+    createdTime: number;
     formatVersion: number;
     __etag: -1;
 }
@@ -15,6 +16,7 @@ export async function storeNode(projectId: string, node: ITeamNode): Promise<ITe
         id: projectId,
         node,
         formatVersion,
+        createdTime: Date.now(),
         __etag: -1
     };
     const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
@@ -24,7 +26,13 @@ export async function storeNode(projectId: string, node: ITeamNode): Promise<ITe
 export async function readNode(projectId: string): Promise<ITeamNode | null> {
     const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
     return dataService.getDocument(areaCollection, projectId).then((doc: NodeDoc) => {
-        return doc.formatVersion === formatVersion ? doc.node : null;
+        if (doc.formatVersion !== formatVersion) {
+            return null;
+        }
+        if (doc.createdTime < Date.now() - (1000 * 60 * 60 * 24)) {
+            return null;
+        }
+        return doc.node;
     }, (error: TfsError): ITeamNode | null => {
         console.log("error getting area node cache", error);
         const { message, name, stack, status, responseText } = error;
