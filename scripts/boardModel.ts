@@ -9,6 +9,7 @@ import { trackEvent } from './events';
 import { areaPathField, closedDateField, projectField, stateField, witField } from './fieldNames';
 import { getTeamsForAreaPathFromCache } from './locateTeam/teamNodeCache';
 import { Timings } from './timings';
+import { fillEmptyOrderByValues } from './fillEmptyOrderbyValues';
 
 interface ITeamBoard {
     teamName: string;
@@ -220,7 +221,7 @@ export class BoardModel {
         const doneName = doneField.referenceName;
         const rowName = rowField.referenceName;
         const {fields} = this.workItem;
-        const workItemTypes = Object.keys(board.columns[0].stateMappings)
+        const wits = Object.keys(board.columns[0].stateMappings)
         const [column] = board.columns.filter((c) => c.name === fields[colName]);
         const orderFieldName =  await getOrderFieldName(fields[projectField]);
         const query = `
@@ -230,7 +231,7 @@ FROM workitems
 WHERE
         [System.TeamProject] = "${fields[projectField]}"
         and System.AreaPath = "${fields[areaPathField]}"
-        and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
+        and ${witField} in (${wits.map((s) => `'${s}'`).join(",")})
         and ${stateField} in (${this.getAllowedStates(board).map((s) => `'${s}'`).join(",")})
         and ${colName} = "${fields[colName]}"
         ${
@@ -261,7 +262,15 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
         const idx = move === "move to top" ? 0 : ids.length - 1;
         const wi = await getWITClient().getWorkItem(ids[idx], [orderFieldName]);
         const offset = move === "move to top" ? -1 : 1;
-        const newStackRank = wi.fields[orderFieldName] + offset;
+
+        let currentOrderValue = wi.fields[orderFieldName]
+        if (!currentOrderValue) {
+            const {min, max} = await fillEmptyOrderByValues(
+                orderFieldName, wi.fields[areaPathField], wits, colName, fields[colName]
+            );
+            currentOrderValue = move === "move to top" ? min : max;
+        }
+        const newStackRank = currentOrderValue + offset;
         const update: JsonPatchDocument & JsonPatchOperation[] = [{
             op: Operation.Add,
             path: `/fields/${orderFieldName}`,
