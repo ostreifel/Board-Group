@@ -1,15 +1,15 @@
-import { Board, BoardColumn, BoardColumnType } from 'TFS/Work/Contracts';
-import { WorkItem } from 'TFS/WorkItemTracking/Contracts';
-import { getClient as getWITClient } from 'TFS/WorkItemTracking/RestClient';
-import { JsonPatchDocument, JsonPatchOperation, Operation } from 'VSS/WebApi/Contracts';
+import { Board, BoardColumn, BoardColumnType } from "TFS/Work/Contracts";
+import { WorkItem } from "TFS/WorkItemTracking/Contracts";
+import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
+import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 
-import { getEnabledBoards, getOrderFieldName } from './backlogConfiguration';
-import { getBoard, getBoardReferences } from './boardCache';
-import { trackEvent } from './events';
-import { areaPathField, closedDateField, projectField, stateField, witField } from './fieldNames';
-import { getTeamsForAreaPathFromCache } from './locateTeam/teamNodeCache';
-import { Timings } from './timings';
-import { fillEmptyOrderByValues } from './fillEmptyOrderbyValues';
+import { getEnabledBoards, getOrderFieldName } from "./backlogConfiguration";
+import { getBoard, getBoardReferences } from "./boardCache";
+import { trackEvent } from "./events";
+import { areaPathField, closedDateField, projectField, stateField, witField } from "./fieldNames";
+import { fillEmptyOrderByValues } from "./fillEmptyOrderbyValues";
+import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
+import { Timings } from "./timings";
 
 interface ITeamBoard {
     teamName: string;
@@ -260,7 +260,7 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
         }
         trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
         const idx = move === "move to top" ? 0 : ids.length - 1;
-        const wi = await getWITClient().getWorkItem(ids[idx], [orderFieldName]);
+        const wi = await getWITClient().getWorkItem(ids[idx], [areaPathField, orderFieldName, colName]);
         const offset = move === "move to top" ? -1 : 1;
 
         let currentOrderValue = wi.fields[orderFieldName]

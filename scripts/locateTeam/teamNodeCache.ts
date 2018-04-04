@@ -1,14 +1,14 @@
-import { TeamContext, WebApiTeam } from 'TFS/Core/Contracts';
-import { getClient as getCoreClient } from 'TFS/Core/RestClient';
-import { getClient as getWorkClient } from 'TFS/Work/RestClient';
-import { TreeStructureGroup, WorkItemClassificationNode } from 'TFS/WorkItemTracking/Contracts';
-import { getClient as getWITClient } from 'TFS/WorkItemTracking/RestClient';
+import { TeamContext, WebApiTeam } from "TFS/Core/Contracts";
+import { getClient as getCoreClient } from "TFS/Core/RestClient";
+import { getClient as getWorkClient } from "TFS/Work/RestClient";
+import { TreeStructureGroup, WorkItemClassificationNode } from "TFS/WorkItemTracking/Contracts";
+import { getClient as getWITClient } from "TFS/WorkItemTracking/RestClient";
 
-import { CachedValue } from '../cachedValue';
-import { trackEvent, ValueWithTimings } from '../events';
-import { Timings } from '../timings';
-import { buildTeamNodes, getTeamsForAreaPath, ITeam, ITeamAreaPaths, ITeamNode, PathNotFound } from './teamNode';
-import { readNode, storeNode } from './teamNodeStorage';
+import { CachedValue } from "../cachedValue";
+import { trackEvent, ValueWithTimings } from "../events";
+import { Timings } from "../timings";
+import { buildTeamNodes, getTeamsForAreaPath, ITeam, ITeamAreaPaths, ITeamNode } from "./teamNode";
+import { readNode, storeNode } from "./teamNodeStorage";
 
 
 async function getTeamsRest(project: string, top: number, skip: number): Promise<WebApiTeam[]> {
@@ -149,9 +149,9 @@ export async function getTeamNode(projectId: string): Promise<ITeamNode> {
 export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): Promise<ITeam[]> {
     const node: ITeamNode = await getTeamNode(projectId);
     const teams = getTeamsForAreaPath(areaPath, node);
-    if (teams instanceof PathNotFound) {
+    if (teams === "path not found") {
         const newNode = await rebuildCache(projectId, "areapath miss");
-        return await getTeamsForAreaPath(areaPath, newNode) as ITeam[];
+        return getTeamsForAreaPath(areaPath, newNode) as ITeam[];
     }
     return teams;
 }

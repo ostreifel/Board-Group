@@ -1,5 +1,6 @@
-import { BoardModel } from './boardModel';
 import { BoardColumnType } from "TFS/Work/Contracts";
+
+import { BoardModel } from "./boardModel";
 
 export function menuItemsFromBoard(teamName: string,
     boardModel: BoardModel,

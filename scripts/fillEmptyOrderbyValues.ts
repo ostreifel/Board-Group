@@ -4,9 +4,10 @@ import { getClient as getBatchClient } from "TFS/WorkItemTracking/BatchRestClien
 import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Contracts";
 
 import { areaPathField, witField } from "./fieldNames";
+import { trackEvent } from "./events";
 
 async function getWorkItems(wiql: string, count: number, fields: string[]): Promise<WorkItem[]> {
-    const ids = (await getClient().queryByWiql({query: wiql}, null, null, null, 1)).workItems.map(({id}) => id);
+    const ids = (await getClient().queryByWiql({query: wiql}, null, null, null, count)).workItems.map(({id}) => id);
     if (ids.length === 0) {
         return [];
     }
@@ -58,7 +59,7 @@ export async function fillEmptyOrderByValues(
     if (wis.length !== 0) {
         const updates: ([number, JsonPatchDocument])[] = []
         let orderCounter = initialMax || 10000;
-        min = Math.min(min, orderCounter);
+        min = Math.min(min, orderCounter + 10) || orderCounter + 10;
         for (const wi of wis) {
             orderCounter += 10;
             const update: JsonPatchDocument & JsonPatchOperation[] = [{
@@ -68,9 +69,10 @@ export async function fillEmptyOrderByValues(
             } as JsonPatchOperation];
             updates.push([wi.id,update]);
         }
-        max = Math.max(max, orderCounter);
+        max = Math.max(max, orderCounter) || orderCounter;
         await getBatchClient().updateWorkItemsBatch(updates);
     }
 
+    trackEvent("fillEmpty", {wis: wis.length + ""});
     return { min, max };
 }
