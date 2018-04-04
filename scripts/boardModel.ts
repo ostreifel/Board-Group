@@ -230,6 +230,8 @@ FROM workitems
 WHERE
         [System.TeamProject] = "${fields[projectField]}"
         and System.AreaPath = "${fields[areaPathField]}"
+        and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
+        and ${stateField} in (${this.getAllowedStates(board).map((s) => `'${s}'`).join(",")})
         and ${colName} = "${fields[colName]}"
         ${
             column.isSplit ?
@@ -239,8 +241,6 @@ WHERE
             column.columnType === BoardColumnType.InProgress ?
             `and ${rowName} = "${fields[rowName] || ""}"` : ""
         }
-        and ${stateField} in (${this.getAllowedStates(board).map((s) => `'${s}'`).join(",")})
-        and ${witField} in (${workItemTypes.map((s) => `'${s}'`).join(",")})
 ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} DESC` : orderFieldName}, ID
 `;
         const results = await getWITClient().queryByWiql({query});
