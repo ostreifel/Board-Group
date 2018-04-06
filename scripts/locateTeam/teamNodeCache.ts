@@ -9,6 +9,7 @@ import { trackEvent, ValueWithTimings } from "../events";
 import { Timings } from "../timings";
 import { buildTeamNodes, getTeamsForAreaPath, ITeam, ITeamAreaPaths, ITeamNode } from "./teamNode";
 import { readNode, storeNode } from "./teamNodeStorage";
+import { setStatus } from "../tryExecute";
 
 
 async function getTeamsRest(project: string, top: number, skip: number): Promise<WebApiTeam[]> {
@@ -102,7 +103,9 @@ export async function rebuildCache(projectId: string, trigger: string): Promise<
         delete teamNodeCache[projectId];
     }
     const cacheTimings = new Timings();
+    setStatus("getting areapaths and team settings...");
     const [areaPaths, teamAreaPaths] = await Promise.all([getAreaPaths(projectId), getAllTeamAreapaths(projectId)]);
+    setStatus("building team node...");
     cacheTimings.measure("restCalls", false);
     const node = buildTeamNodes(areaPaths.value, teamAreaPaths.value);
     cacheTimings.measure("buildTeamNodes");
@@ -147,6 +150,7 @@ export async function getTeamNode(projectId: string): Promise<ITeamNode> {
  * @param areaPath 
  */
 export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): Promise<ITeam[]> {
+    setStatus("getting team node...");
     const node: ITeamNode = await getTeamNode(projectId);
     const teams = getTeamsForAreaPath(areaPath, node);
     if (teams === "path not found") {

@@ -10,6 +10,7 @@ import { areaPathField, closedDateField, projectField, stateField, witField } fr
 import { fillEmptyOrderByValues } from "./fillEmptyOrderbyValues";
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { Timings } from "./timings";
+import { getStatus, setStatus } from "./tryExecute";
 
 interface ITeamBoard {
     teamName: string;
@@ -132,10 +133,12 @@ export class BoardModel {
         }
         try {
             const { project } = VSS.getWebContext();
+            setStatus("getting workItem...");
             const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.projectName = wi.fields[projectField];
+            setStatus("getting teams...");
             const teams = await getTeams();
             this.refreshTimings.measure("cacheRead");
             this.teams = teams;
@@ -144,10 +147,12 @@ export class BoardModel {
                 return;
             }
             const teamBoards = await Promise.all(teams.map(async (team) => {
+                setStatus("getting board references & backlog configuration...");
                 const [references, isBoardEnabled] = await Promise.all([
                     getBoardReferences(this.projectName, team),
                     getIsBoardEnabled(team),
                 ]);
+                setStatus("getting boards...");
                 const boards = await Promise.all(references.filter(r => isBoardEnabled(r.name))
                     .map(r => getBoard(this.projectName, team, r.id)));
                 return this.findAssociatedBoard(team, boards);
@@ -157,7 +162,9 @@ export class BoardModel {
             this.boards = teamBoards.filter(t => t.haveWiData);
             this.completedRefresh();
         } catch (e) {
-            trackEvent("refreshFailure", {message: e.message});
+            trackEvent("refreshFailure", {message: e.message, stack: e.stack, status: getStatus()});
+        } finally {
+            setStatus("");
         }
     }
 
