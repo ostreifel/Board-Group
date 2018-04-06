@@ -13,7 +13,11 @@ const settings: {
 
 async function hardGetBacklogConfiguration(project: string): Promise<BacklogConfiguration | null> {
     if (getWorkClient().getBacklogConfigurations) {
-        return await getWorkClient().getBacklogConfigurations({project} as TeamContext);
+        try {
+            return await getWorkClient().getBacklogConfigurations({project} as TeamContext);
+        } catch {
+            return null;
+        }
     } else {
         return null;
     }
@@ -65,7 +69,7 @@ export async function getEnabledBoards(projectName: string, teamName: string): P
 export async function getOrderFieldName(project: string): Promise<string> {
     const config = await getBacklogConfiguration(project);
     if (!config) {
-        return "System.";
+        return "Microsoft.VSTS.Common.StackRank";
     }
     return config.backlogFields.typeFields.Order;
 }
