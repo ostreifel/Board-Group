@@ -1,5 +1,3 @@
-[![Donate](img/donate.png)](https://www.paypal.me/OttoStreifel/5)  
-
 Adds a link to the associated board. Allows changing of the lane, column, and done column the work item is on with dropdowns.  
 ![kanban group image](img/group.png)  
 Adds a context menu items to the kanban cards to change column and row without dragging.  
