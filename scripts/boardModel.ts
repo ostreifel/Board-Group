@@ -11,7 +11,7 @@ import { fillEmptyOrderByValues } from "./fillEmptyOrderbyValues";
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { Timings } from "./timings";
 import { getStatus, setStatus } from "./tryExecute";
-import { getWorkItem } from "./boardModelBatcher";
+import { getWorkItem } from "./batch/BatchedWorkItems";
 
 interface ITeamBoard {
     teamName: string;

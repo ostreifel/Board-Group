@@ -81,8 +81,18 @@ async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuI
     const location = VSS.getContribution().id.match("board-query-bulk-edit$") ? "query" : "backlogs";
     /** Board will always exist if on backlogs */
     const knownTeam = location === "backlogs" ? VSS.getWebContext().team.name : "";
+    if (workItemIds.length > 500) {
+        trackEvent("Too Many Selected", {location});
+        const items: IContributedMenuItem[] = [{
+            text: "Cannot update more than 500 work items at once",
+            title: "This a performance constraint on figuring out whether >500 workitems have a common board before the Board Group extension runs out of time to show this context menu. Update the selection to 500 or less.",
+            icon: "/img/logoIcon.png",
+            disabled: true
+        }];
+        return items;
+    }
     const timings = new Timings();
-    const boardModels = await Promise.all(workItemIds.map(id => BoardModel.create(id, {location, knownTeam, batchWindow: 10})));
+    const boardModels = await Promise.all(workItemIds.map(id => BoardModel.create(id, {location, knownTeam, batchWindow: 5})));
     const teamToBoard: IBoardMappings = {};
     const boardIds = commonBoards(boardModels);
     for (let boardModel of boardModels) {
@@ -97,7 +107,7 @@ async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuI
         }
     }
     timings.measure("totalTime");
-    trackEvent("bulkContextMenu", { workItemCount: String(workItemIds.length) }, timings.measurements);
+    trackEvent("bulkContextMenu", { location, workItemCount: String(workItemIds.length) }, timings.measurements);
 
     if (Object.keys(teamToBoard).length > 0) {
         const items = createTeamItems(teamToBoard);
