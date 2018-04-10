@@ -56,7 +56,7 @@ export class BoardControl extends Control<{}> {
             projectId: fields[projectId] as string,
             workItemType: fields[wit] as string
         };
-        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, "form", undefined, this.readonly), readTeamPreference(context)]);
+        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, {location: "form", readonly: this.readonly}), readTeamPreference(context)]);
         this.boardModel = boardModel;
         this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
 

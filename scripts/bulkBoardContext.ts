@@ -82,7 +82,7 @@ async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuI
     /** Board will always exist if on backlogs */
     const knownTeam = location === "backlogs" ? VSS.getWebContext().team.name : "";
     const timings = new Timings();
-    const boardModels = await Promise.all(workItemIds.map(id => BoardModel.create(id, location, knownTeam)));
+    const boardModels = await Promise.all(workItemIds.map(id => BoardModel.create(id, {location, knownTeam, batchWindow: 10})));
     const teamToBoard: IBoardMappings = {};
     const boardIds = commonBoards(boardModels);
     for (let boardModel of boardModels) {

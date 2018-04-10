@@ -14,7 +14,7 @@ const menuAction: Partial<IContributedMenuSource> = {
 
         // No need to check if on wi board when opening contextmenu from wi on the board.
         const team = VSS.getWebContext().team.name;
-        const boardModel = await BoardModel.create(context.id, "card", team);
+        const boardModel = await BoardModel.create(context.id, {location: "card", knownTeam: team});
         menuItemsFromBoard(team, boardModel);
     }
 };

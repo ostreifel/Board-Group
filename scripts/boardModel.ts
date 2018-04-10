@@ -11,6 +11,7 @@ import { fillEmptyOrderByValues } from "./fillEmptyOrderbyValues";
 import { getTeamsForAreaPathFromCache } from "./locateTeam/teamNodeCache";
 import { Timings } from "./timings";
 import { getStatus, setStatus } from "./tryExecute";
+import { getWorkItem } from "./boardModelBatcher";
 
 interface ITeamBoard {
     teamName: string;
@@ -24,10 +25,17 @@ export interface IPosition {
     total: number;
 }
 
+export interface IBoardOptions {
+    location: string;
+    knownTeam?: string;
+    readonly?: boolean;
+    batchWindow?: number;
+}
+
 let firstRefresh = true;
 export class BoardModel {
-    public static async create(id: number, location: string, team?: string, readonly?: boolean): Promise<BoardModel> {
-        const boardModel = new BoardModel(location, team, readonly);
+    public static async create(id: number, options: IBoardOptions): Promise<BoardModel> {
+        const boardModel = new BoardModel(options);
         await boardModel.refresh(id);
         return boardModel;
     }
@@ -86,12 +94,12 @@ export class BoardModel {
     private fieldTimings: Timings = new Timings();
 
     private workItem: WorkItem;
-    private constructor(readonly location: string, readonly knownTeam: string, readonly readonly: boolean) { }
+    private constructor(private readonly options: IBoardOptions) { }
 
     private completedRefresh() {
         this.refreshTimings.measure("totalTime", false);
         trackEvent("boardRefresh", {
-            location: this.location,
+            location: this.options.location,
             teamCount: String(this.teams.length),
             foundBoard: String(!!this.getBoard()),
             matchingBoards: String(this.boards.length),
@@ -119,14 +127,14 @@ export class BoardModel {
         this.boards = [];
         
         const getTeams = async (): Promise<string[]> => {
-            if (this.knownTeam) {
-                return [this.knownTeam];
+            if (this.options.knownTeam) {
+                return [this.options.knownTeam];
             }
             const teams = await getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField]);
             return teams.map(({name}) => name);
         };
         const getIsBoardEnabled = async (team: string) => {
-            if (this.knownTeam) {
+            if (this.options.knownTeam) {
                 return () => true;
             }
             return await getEnabledBoards(this.projectName, team);
@@ -135,7 +143,7 @@ export class BoardModel {
             setStatus("getting webcontext...");
             const { project } = VSS.getWebContext();
             setStatus("getting workItem...");
-            const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
+            const wi = await getWorkItem(workItemId, this.options.readonly && project.name, this.options.batchWindow);
             this.refreshTimings.measure("getWorkItem");
             this.workItem = wi;
             this.projectName = wi.fields[projectField];
@@ -188,11 +196,11 @@ export class BoardModel {
         }
         if (!this.getBoard(team)) {
             console.warn(`Save called on ${field} with ${val} when board not set`);
-            trackEvent("saveError", { field, location: this.location });
+            trackEvent("saveError", { field, location: this.options.location });
             return;
         }
         this.fieldTimings.measure("timeToClick");
-        trackEvent("UpdateBoardField", { field, location: this.location }, this.fieldTimings.measurements);
+        trackEvent("UpdateBoardField", { field, location: this.options.location }, this.fieldTimings.measurements);
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
             patchDocument.push(<JsonPatchOperation>{ 
@@ -268,7 +276,7 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
         if (!move || (move === "move to top" && pos.val === 0)) {
             return pos;
         }
-        trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
+        trackEvent("UpdateBoardField", { field: "colPos", move, location: this.options.location });
         const idx = move === "move to top" ? 0 : ids.length - 1;
         setStatus(`get column index in order to ${move}...`);
         const wi = await getWITClient().getWorkItem(ids[idx], [areaPathField, orderFieldName, colName]);
