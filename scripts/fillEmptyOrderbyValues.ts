@@ -5,6 +5,7 @@ import { JsonPatchDocument, JsonPatchOperation, Operation } from "VSS/WebApi/Con
 
 import { areaPathField, witField } from "./fieldNames";
 import { trackEvent } from "./events";
+import { setStatus } from "./tryExecute";
 
 async function getWorkItems(wiql: string, count: number, fields: string[]): Promise<WorkItem[]> {
     const ids = (await getClient().queryByWiql({query: wiql}, null, null, null, count)).workItems.map(({id}) => id);
@@ -49,6 +50,7 @@ export async function fillEmptyOrderByValues(
     ORDER BY ID
     `;
 
+    setStatus("getting work items with out explicit column indicies...");
     const [initialMin, initialMax, wis] = await Promise.all([
         await getWorkItemFieldValue<number>(endValueWiql + " ASC", orderField),
         await getWorkItemFieldValue<number>(endValueWiql + " DESC", orderField),
@@ -70,6 +72,7 @@ export async function fillEmptyOrderByValues(
             updates.push([wi.id,update]);
         }
         max = Math.max(max, orderCounter) || orderCounter;
+        setStatus("giving other work items explicit column indicies...");
         await getBatchClient().updateWorkItemsBatch(updates);
     }
 

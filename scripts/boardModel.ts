@@ -132,6 +132,7 @@ export class BoardModel {
             return await getEnabledBoards(this.projectName, team);
         }
         try {
+            setStatus("getting webcontext...");
             const { project } = VSS.getWebContext();
             setStatus("getting workItem...");
             const wi = await getWITClient().getWorkItem(workItemId, null, null, null, this.readonly && project.name);
@@ -205,6 +206,7 @@ export class BoardModel {
                 value: val
             });
         }
+        setStatus("saving workitem...");
         const workItem = await getWITClient().updateWorkItem(patchDocument, this.workItem.id);
             this.workItem = workItem;
     }
@@ -251,6 +253,7 @@ WHERE
         }
 ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} DESC` : orderFieldName}, ID
 `;
+        setStatus("querying for column index...");
         const results = await getWITClient().queryByWiql({query});
         const ids = results.workItems.map(({id}) => id);
         if (ids.length < 0) {
@@ -267,6 +270,7 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
         }
         trackEvent("UpdateBoardField", { field: "colPos", move, location: this.location });
         const idx = move === "move to top" ? 0 : ids.length - 1;
+        setStatus(`get column index in order to ${move}...`);
         const wi = await getWITClient().getWorkItem(ids[idx], [areaPathField, orderFieldName, colName]);
         const offset = move === "move to top" ? -1 : 1;
 
@@ -283,6 +287,7 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
             path: `/fields/${orderFieldName}`,
             value: newStackRank,
         } as JsonPatchOperation];
+        setStatus("updating work item column index");
         const updatedWi = await getWITClient().updateWorkItem(update, this.workItem.id);
         this.workItem = updatedWi;
         return pos;

@@ -1,6 +1,7 @@
 import { TeamContext } from 'TFS/Core/Contracts';
 import { BacklogConfiguration, TeamSetting } from 'TFS/Work/Contracts';
 import { getClient as getWorkClient } from 'TFS/Work/RestClient';
+import { setStatus } from './tryExecute';
 
 const settings: {
     [projectName: string]: {
@@ -14,6 +15,7 @@ const settings: {
 async function hardGetBacklogConfiguration(project: string): Promise<BacklogConfiguration | null> {
     if (getWorkClient().getBacklogConfigurations) {
         try {
+            setStatus("getting backlog configuration...");
             return await getWorkClient().getBacklogConfigurations({project} as TeamContext);
         } catch {
             return null;

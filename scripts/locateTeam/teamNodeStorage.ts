@@ -1,5 +1,6 @@
 import { ITeamNode } from "./teamNode";
 import { trackEvent } from "../events";
+import { setStatus } from "../tryExecute";
 
 const formatVersion = 3;
 const areaCollection = "area-mappings";
@@ -24,6 +25,7 @@ export async function storeNode(projectId: string, node: ITeamNode): Promise<ITe
     return value.node;
 }
 export async function readNode(projectId: string): Promise<ITeamNode | null> {
+    setStatus("reading team node from document service...");
     const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
     return dataService.getDocument(areaCollection, projectId).then((doc: NodeDoc) => {
         if (doc.formatVersion !== formatVersion) {
