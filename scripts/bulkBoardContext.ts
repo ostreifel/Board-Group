@@ -82,7 +82,7 @@ async function createMenuItems(workItemIds: number[]): Promise<IContributedMenuI
     /** Board will always exist if on backlogs */
     const knownTeam = location === "backlogs" ? VSS.getWebContext().team.name : "";
     if (workItemIds.length > 500) {
-        trackEvent("Too Many Selected", {location});
+        trackEvent("Too Many Selected", {location, count: workItemIds.length + ""});
         const items: IContributedMenuItem[] = [{
             text: "Cannot update more than 500 work items at once",
             title: "This a performance constraint on figuring out whether >500 workitems have a common board before the Board Group extension runs out of time to show this context menu. Update the selection to 500 or less.",
