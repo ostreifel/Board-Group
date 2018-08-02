@@ -126,11 +126,11 @@ export class BoardModel {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
         
-        const getTeams = async (): Promise<string[]> => {
+        const getTeams = async (skipCache?: string): Promise<string[]> => {
             if (this.options.knownTeam) {
                 return [this.options.knownTeam];
             }
-            const teams = await getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField]);
+            const teams = await getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField], skipCache);
             return teams.map(({name}) => name);
         };
         const getIsBoardEnabled = async (team: string) => {
@@ -155,21 +155,29 @@ export class BoardModel {
                 this.completedRefresh();
                 return;
             }
-            const teamBoards = await Promise.all(teams.map(async (team) => {
-                setStatus("getting board references & backlog configuration...");
-                const [references, isBoardEnabled] = await Promise.all([
-                    getBoardReferences(this.projectName, team),
-                    getIsBoardEnabled(team),
-                ]);
-                setStatus("getting boards...");
-                const boards = await Promise.all(references.filter(r => isBoardEnabled(r.name))
-                    .map(r => getBoard(this.projectName, team, r.id)));
-                return this.findAssociatedBoard(team, boards);
-            }));
-            this.refreshTimings.measure("getAllBoards");
-    
-            this.boards = teamBoards.filter(t => t.haveWiData);
-            this.completedRefresh();
+            try {
+                const teamBoards = await Promise.all(teams.map(async (team) => {
+                    setStatus("getting board references & backlog configuration...");
+                    const [references, isBoardEnabled] = await Promise.all([
+                        getBoardReferences(this.projectName, team),
+                        getIsBoardEnabled(team),
+                    ]);
+                    setStatus("getting boards...");
+                    const boards = await Promise.all(references.filter(r => isBoardEnabled(r.name))
+                        .map(r => getBoard(this.projectName, team, r.id)));
+                    return this.findAssociatedBoard(team, boards);
+                }));
+                this.refreshTimings.measure("getAllBoards");
+        
+                this.boards = teamBoards.filter(t => t.haveWiData);
+                this.completedRefresh();
+            } catch (e) {
+                if (e.status === 404 && e.message.indexOf("The team with id") >= 0) {
+                    getTeams("team not found");
+                    return this.refresh(workItemId);
+                }
+                throw e;
+            }
         } catch (e) {
             trackEvent("refreshFailure", {message: e.message, stack: e.stack, status: getStatus()});
         } finally {

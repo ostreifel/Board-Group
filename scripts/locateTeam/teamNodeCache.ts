@@ -149,12 +149,12 @@ export async function getTeamNode(projectId: string): Promise<ITeamNode> {
  * Invalidate cache if areapath is unkown.
  * @param areaPath 
  */
-export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: string): Promise<ITeam[]> {
+export async function getTeamsForAreaPathFromCache(projectId: string, areaPath: string, skipCache?: string): Promise<ITeam[]> {
     setStatus("getting team node...");
     const node: ITeamNode = await getTeamNode(projectId);
     const teams = getTeamsForAreaPath(areaPath, node);
-    if (teams === "path not found") {
-        const newNode = await rebuildCache(projectId, "areapath miss");
+    if (teams === "path not found" || skipCache) {
+        const newNode = await rebuildCache(projectId, skipCache || "areapath miss");
         return getTeamsForAreaPath(areaPath, newNode) as ITeam[];
     }
     return teams;
