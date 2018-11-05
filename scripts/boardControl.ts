@@ -8,7 +8,9 @@ import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import { HostNavigationService } from "VSS/SDK/Services/Navigation";
+import { initializeIcons } from "office-ui-fabric-react/lib/Icons";
 
+initializeIcons();
 let updateColumnIndexCounter = 0;
 const startHeight = () => $(".board-control").height();
 const id = "System.Id";
