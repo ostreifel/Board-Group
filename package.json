@@ -2,10 +2,10 @@
   "devDependencies": {
     "@types/applicationinsights-js": "^1.0.2",
     "@types/jquery": "^2.0.41",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-clean": "^0.4.0",
     "gulp-rename": "^1.2.2",
-    "gulp-sass": "^3.1.0",
+    "gulp-sass": "^4.0.2",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.1",
     "gulp-webpack": "^1.5.0",
@@ -13,7 +13,7 @@
     "react-dom": "^15.4.0",
     "ts-loader": "^4.1.0",
     "typescript": "^2.7.2",
-    "vss-web-extension-sdk": "^5.131.0",
+    "vss-web-extension-sdk": "^5.141.0",
     "yargs": "^7.0.2"
   },
   "name": "board-group",
