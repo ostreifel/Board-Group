@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "board-group",
-    "version": "2.5.119",
+    "version": "2.5.124",
     "name": "Board Group",
     "scopes": [ "vso.work", "vso.work_write" ],
     "description": "Places a group on the work item form showing the current board.",
@@ -58,6 +58,10 @@
         },
         {
             "path": "dist/bulkBoardContext.html",
+            "addressable": true
+        },
+        {
+            "path": "dist/boardGroup.css",
             "addressable": true
         }
     ],

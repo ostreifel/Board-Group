@@ -12,33 +12,30 @@ const args =  yargs.argv;
 
 const contentFolder = 'dist';
 
-gulp.task('clean', (done) => {
-    gulp.src([contentFolder, '*.vsix'])
+gulp.task('clean', () => {
+    return gulp.src([contentFolder, '*.vsix'])
         .pipe(clean());
-    done();
-})
-
-
-gulp.task('copy', gulp.series((done) => {
-    gulp.src('node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js')
+});
+gulp.task('copy-sdk', () => {
+    return gulp.src('node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js')
         .pipe(gulp.dest(contentFolder + '/scripts'));
-    gulp.src('img/*').pipe(gulp.dest(`${contentFolder}/img`));
-
-    gulp.src([
+});
+gulp.task('copy-img', () => {
+    return gulp.src('img/*').pipe(gulp.dest(`${contentFolder}/img`));
+});
+gulp.task('copy-html', () => {
+    return gulp.src([
         '*.html',
         '*.md',
         ])
         .pipe(gulp.dest(contentFolder));
-    done();
-}));
-gulp.task('styles', gulp.series((done) => {
-    gulp.src("boardGroup.scss")
+});
+gulp.task('copy', gulp.parallel('copy-sdk', 'copy-img', 'copy-html'));
+gulp.task('styles', gulp.series(() => {
+    return gulp.src("boardGroup.scss")
         .pipe(sass())
         .pipe(gulp.dest(contentFolder));
-    done();
 }));
-
-
 gulp.task('webpack', gulp.series((done) => {
     execSync('webpack', {
         stdio: [null, process.stdout, process.stderr]
