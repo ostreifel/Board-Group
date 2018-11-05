@@ -12,32 +12,43 @@ const args =  yargs.argv;
 
 const contentFolder = 'dist';
 
-gulp.task('clean', () => {
-    return gulp.src([contentFolder, '*.vsix'])
+gulp.task('clean', (done) => {
+    gulp.src([contentFolder, '*.vsix'])
         .pipe(clean());
+    done();
 })
 
 
-gulp.task('copy', ['clean'], () => {
+gulp.task('copy', gulp.series((done) => {
     gulp.src('node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js')
         .pipe(gulp.dest(contentFolder + '/scripts'));
     gulp.src('img/*').pipe(gulp.dest(`${contentFolder}/img`));
 
-    return gulp.src([
+    gulp.src([
         '*.html',
         '*.md',
         ])
         .pipe(gulp.dest(contentFolder));
-});
+    done();
+}));
+gulp.task('styles', gulp.series((done) => {
+    gulp.src("boardGroup.scss")
+        .pipe(sass())
+        .pipe(gulp.dest(contentFolder));
+    done();
+}));
 
 
-gulp.task('webpack', ['copy'], () => {
-    return execSync('webpack', {
+gulp.task('webpack', gulp.series((done) => {
+    execSync('webpack', {
         stdio: [null, process.stdout, process.stderr]
     });
-});
+    done();
+}));
 
-gulp.task('package', ['webpack'], () => {
+gulp.task('build', gulp.parallel('copy', 'styles', 'webpack'));
+
+gulp.task('package', gulp.series('clean', 'build', (done) => {
     const overrides = {}
     if (yargs.argv.release) {
         overrides.public = true;
@@ -50,7 +61,7 @@ gulp.task('package', ['webpack'], () => {
     const rootArg = `--root ${contentFolder}`;
     const manifestsArg = `--manifests ..\\vss-extension.json`;
 
-    exec(`tfx extension create ${rootArg} ${overridesArg} ${manifestsArg} --rev-version`,
+    execSync(`tfx extension create ${rootArg} ${overridesArg} ${manifestsArg} --rev-version`,
         (err, stdout, stderr) => {
             if (err) {
                 console.log(err);
@@ -60,7 +71,7 @@ gulp.task('package', ['webpack'], () => {
             console.log(stderr);
             
         });
+    done();
+}));
 
-});
-
-gulp.task('default', ['package']);
+gulp.task('default', gulp.series('package'));
