@@ -43,6 +43,9 @@
         border-color: transparent;
       }
     }
+    button {
+      @include color(black);
+    }
     .dropdown {
       margin: 0;
       padding: 0;
@@ -56,7 +59,7 @@
         }
         &.selected {
           text-decoration: underline;
-          background-color: #e5e5e5;
+          @include background-color(lightgray);
         }
       }
     }
@@ -71,16 +74,11 @@
         @include border-color(white);
       }
       button.up {
-        background: url("img/topIcon.png") no-repeat;
-        background-size: 16px;
         &:disabled {
           opacity: 0.5;
         }
       }
       button.down {
-        background: url("img/topIcon.png") no-repeat;
-        background-size: 16px;
-        transform: rotate(180deg);
         &:disabled {
           opacity: 0.5;
         }
@@ -93,7 +91,7 @@
       &.drop {
         width: calc(100% - 1px);
         margin-left: -4px;
-        border-color: #eaeaea;
+        @include border-color(lightgray);
         &:not(:hover):not(.focus) {
           border-color: transparent;
           .drop.bowtie-icon:not(.hover) {
