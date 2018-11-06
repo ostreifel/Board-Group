@@ -43,7 +43,7 @@
         border-color: transparent;
       }
     }
-    button {
+    button, input {
       @include color(black);
     }
     .dropdown {
