@@ -6,7 +6,6 @@ const clean = require("gulp-clean");
 const yargs = require("yargs");
 const {exec, execSync} = require('child_process');
 const rename = require('gulp-rename');
-const sass = require('gulp-sass');
 
 const args =  yargs.argv;
 
@@ -31,10 +30,11 @@ gulp.task('copy-html', () => {
         .pipe(gulp.dest(contentFolder));
 });
 gulp.task('copy', gulp.parallel('copy-sdk', 'copy-img', 'copy-html'));
-gulp.task('styles', gulp.series(() => {
-    return gulp.src("boardGroup.scss")
-        .pipe(sass())
-        .pipe(gulp.dest(contentFolder));
+gulp.task('styles', gulp.series(async () => {
+    
+    execSync("node ./node_modules/sass/sass.js ./boardGroup.scss ./dist/boardGroup.css", {
+        stdio: [null, process.stdout, process.stderr]
+    });
 }));
 gulp.task('webpack', gulp.series((done) => {
     execSync('webpack', {
