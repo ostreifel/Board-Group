@@ -8,9 +8,8 @@ import { trackEvent } from "./events";
 import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import { HostNavigationService } from "VSS/SDK/Services/Navigation";
-import { initializeIcons } from "office-ui-fabric-react/lib/Icons";
+import { createIcon } from "./icon";
 
-initializeIcons();
 let updateColumnIndexCounter = 0;
 const startHeight = () => $(".board-control").height();
 const id = "System.Id";
@@ -64,7 +63,7 @@ export class BoardControl extends Control<{}> {
 
         // update ui
         if (this.boardModel.getColumn(this.team)) {
-            this.updateForBoard();
+            await this.updateForBoard();
         } else {
             this.updateNoBoard();
         }
@@ -78,11 +77,11 @@ export class BoardControl extends Control<{}> {
     private readonly onModelSaveSuccess = async () => {
         const refreshed = await this.refreshWI();
         if (!refreshed) {
-            this.updateForBoard();
+            await this.updateForBoard();
         }
     }
-    private readonly onModelSaveFailure = (error: TfsError) => {
-        this.updateForBoard();
+    private readonly onModelSaveFailure = async (error: TfsError) => {
+        await this.updateForBoard();
         const message: string = (error && error.message) ||
             (error && error["value"] && error["value"]["message"]) ||
             error + "";
@@ -91,7 +90,7 @@ export class BoardControl extends Control<{}> {
         VSS.resize();
     }
 
-    private updateForBoard() {
+    private async updateForBoard() {
         const boardControl = this;
         const columnOptions: IComboOptions = {
             value: this.boardModel.getColumn(this.team),
@@ -152,12 +151,12 @@ export class BoardControl extends Control<{}> {
         });
         const button = $(`
             <button class="board-selector">
-                <img src="img/chevronIcon.png"/>
             </button>`).click((_) => {
                 dropdown.toggle();
                 VSS.resize();
                 trackEvent("teamSwitcherClick", { expand: String(dropdown.is(":visible")) });
             });
+        await createIcon(button[0], "ChevronDownSmall");
         if (this.boardModel.getTeams().length > 1) {
             this._element.append(button);
             this._element.append(dropdown);
