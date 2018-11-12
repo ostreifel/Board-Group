@@ -1,6 +1,6 @@
 @function createColor($name, $defaultR, $defaultG, $defaultB, $defaultA: 1) {
     @return (
-        variable: rgba(var($name, $defaultR, $defaultG, $defaultB, $defaultA)),
+        variable: rgba(var($name, $defaultR, $defaultG, $defaultB), $defaultA),
         literal: rgba($defaultR, $defaultG, $defaultB, $defaultA),
     );
 }
