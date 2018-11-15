@@ -37,7 +37,8 @@ gulp.task('styles', gulp.series(async () => {
     });
 }));
 gulp.task('webpack', gulp.series((done) => {
-    execSync('webpack', {
+    const option = yargs.argv.release ? "-p" : "-d";
+    execSync(`webpack ${option}`, {
         stdio: [null, process.stdout, process.stderr]
     });
     done();
