@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const path = require("path");
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     entry: {
@@ -26,6 +27,14 @@ module.exports = {
     },
     mode: "development",
     devtool: "source-map",
+    plugins: [
+      new BundleAnalyzerPlugin({
+          openAnalyzer: false,
+          generateStatsFile: true,
+          reportFilename: "bundle-analysis.html",
+          analyzerMode: "static"
+      })
+    ],  
     module: {
       rules: [
         // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`

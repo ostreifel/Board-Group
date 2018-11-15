@@ -1,13 +1,8 @@
 const path = require("path");
 const gulp = require('gulp');
-const webpack = require('gulp-webpack');
-const ts = require("gulp-typescript");
 const clean = require("gulp-clean");
 const yargs = require("yargs");
 const {exec, execSync} = require('child_process');
-const rename = require('gulp-rename');
-
-const args =  yargs.argv;
 
 const contentFolder = 'dist';
 
@@ -38,7 +33,7 @@ gulp.task('styles', gulp.series(async () => {
 }));
 gulp.task('webpack', gulp.series((done) => {
     const option = yargs.argv.release ? "-p" : "-d";
-    execSync(`webpack ${option}`, {
+    execSync(`node ./node_modules/webpack-cli/bin/cli.js ${option}`, {
         stdio: [null, process.stdout, process.stderr]
     });
     done();

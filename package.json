@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "postinstall": "npm run package-dev",
+    "package-dev": "node ./node_modules/gulp/bin/gulp.js",
+    "package-release": "node ./node_modules/gulp/bin/gulp.js --release"
+  },
   "devDependencies": {
     "@types/applicationinsights-js": "^1.0.2",
     "@types/jquery": "^2.0.41",
@@ -8,7 +13,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.1",
-    "gulp-webpack": "^1.5.0",
     "office-ui-fabric-react": "^5.70.0",
     "react": "^15.4.0",
     "react-dom": "^15.4.0",
@@ -16,6 +20,9 @@
     "ts-loader": "^4.1.0",
     "typescript": "^2.9.2",
     "vss-web-extension-sdk": "^5.141.0",
+    "webpack": "^4.25.1",
+    "webpack-bundle-analyzer": "^3.0.3",
+    "webpack-cli": "^3.1.2",
     "yargs": "^7.0.2"
   },
   "name": "board-group",
