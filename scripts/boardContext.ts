@@ -1,3 +1,4 @@
+import "promise-polyfill/src/polyfill";
 import { BoardModel } from './boardModel';
 import { menuItemsFromBoard } from "./boardMenuItems";
 

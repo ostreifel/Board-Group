@@ -1,5 +1,6 @@
 /// <reference types="vss-web-extension-sdk" />
 
+import "promise-polyfill/src/polyfill";
 import { BoardControl } from "./boardControl";
 import * as Controls from "VSS/Controls";
 import { IWorkItemNotificationListener } from "TFS/WorkItemTracking/ExtensionContracts";

@@ -3,6 +3,7 @@ const gulp = require('gulp');
 const clean = require("gulp-clean");
 const yargs = require("yargs");
 const {exec, execSync} = require('child_process');
+const inlinesource = require('gulp-inline-source');
 
 const contentFolder = 'dist';
 
@@ -17,14 +18,18 @@ gulp.task('copy-sdk', () => {
 gulp.task('copy-img', () => {
     return gulp.src('img/*').pipe(gulp.dest(`${contentFolder}/img`));
 });
-gulp.task('copy-html', () => {
+gulp.task('copy-md', () => {
     return gulp.src([
-        '*.html',
         '*.md',
         ])
         .pipe(gulp.dest(contentFolder));
 });
-gulp.task('copy', gulp.parallel('copy-sdk', 'copy-img', 'copy-html'));
+gulp.task('inline-html', gulp.series(() => {
+    return gulp.src("*.html")
+        .pipe(inlinesource())
+        .pipe(gulp.dest(contentFolder));
+}));
+gulp.task('copy', gulp.parallel('copy-img', 'copy-md', 'copy-sdk'));
 gulp.task('styles', gulp.series(async () => {
     
     execSync("node ./node_modules/sass/sass.js ./boardGroup.scss ./dist/boardGroup.css", {
@@ -39,7 +44,7 @@ gulp.task('webpack', gulp.series((done) => {
     done();
 }));
 
-gulp.task('build', gulp.parallel('copy', 'styles', 'webpack'));
+gulp.task('build', gulp.series(gulp.parallel('copy', 'styles'), 'inline-html', 'webpack'));
 
 gulp.task('package', gulp.series('clean', 'build', (done) => {
     const overrides = {}
