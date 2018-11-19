@@ -9,13 +9,10 @@ import { Timings } from "./timings";
 import { readTeamPreference, storeTeamPreference, IPreferredTeamContext } from "./locateTeam/preferredTeam";
 import { HostNavigationService } from "VSS/SDK/Services/Navigation";
 import { createIcon } from "./icon";
+import { areaPathField, idField, witField, projectField } from "./fieldNames";
 
 let updateColumnIndexCounter = 0;
 const startHeight = () => $(".board-control").height();
-const id = "System.Id";
-const wit = "System.WorkItemType";
-const areaPath = "System.AreaPath";
-const projectId = "System.TeamProject";
 export class BoardControl extends Control<{}> {
     // data
     private wiId: number;
@@ -34,11 +31,11 @@ export class BoardControl extends Control<{}> {
     private async updatePreferredTeam(team: string) {
         // don't stop the ui to save preference
         WorkItemFormService.getService().then(async (service) => {
-            const fields = await service.getFieldValues([id, wit, areaPath, projectId]);
+            const fields = await service.getFieldValues([idField, witField, areaPathField, projectField]);
             const context: IPreferredTeamContext = {
-                areaPath: fields[areaPath] as string,
-                projectId: fields[projectId] as string,
-                workItemType: fields[wit] as string
+                areaPath: fields[areaPathField] as string,
+                projectId: fields[projectField] as string,
+                workItemType: fields[witField] as string
             };
             await storeTeamPreference(context, team);
             trackEvent("preferredTeamUpdated", { teamCount: String(this.boardModel.getTeams().length) });
@@ -50,14 +47,14 @@ export class BoardControl extends Control<{}> {
     public async refresh() {
         const formService = await WorkItemFormService.getService();
         this._navigationService = await VSS.getService<HostNavigationService>(VSS.ServiceIds.Navigation);
-        const fields = await formService.getFieldValues([id, wit, areaPath, projectId]);
-        this.wiId = fields[id] as number;
+        const fields = await formService.getFieldValues([idField, witField, areaPathField, projectField]);
+        this.wiId = fields[idField] as number;
         const context: IPreferredTeamContext = {
-            areaPath: fields[areaPath] as string,
-            projectId: fields[projectId] as string,
-            workItemType: fields[wit] as string
+            areaPath: fields[areaPathField] as string,
+            projectId: fields[projectField] as string,
+            workItemType: fields[witField] as string
         };
-        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, {location: "form", readonly: this.readonly}), readTeamPreference(context)]);
+        const [boardModel, team] = await Promise.all([BoardModel.create(this.wiId, {location: "form", readonly: this.readonly, partialWi: fields}), readTeamPreference(context)]);
         this.boardModel = boardModel;
         this.team = boardModel.getTeams().some(t => t === team) ? team : boardModel.estimatedTeam();
 

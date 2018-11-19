@@ -30,6 +30,7 @@ export interface IBoardOptions {
     knownTeam?: string;
     readonly?: boolean;
     batchWindow?: number;
+    partialWi?: {[refName: string]: Object};
 }
 
 let firstRefresh = true;
@@ -130,7 +131,19 @@ export class BoardModel {
             if (this.options.knownTeam) {
                 return [this.options.knownTeam];
             }
-            const teams = await getTeamsForAreaPathFromCache(this.projectName, this.workItem.fields[areaPathField], skipCache);
+            let project: string;
+            let areapath: string;
+            const {partialWi} = this.options;
+            if (partialWi && partialWi[areaPathField] && partialWi[projectField]) {
+                project = partialWi[projectField] as string;
+                areapath = partialWi[areaPathField] as string;
+            } else {
+                const {fields} = await wiPromise;
+                project = fields[projectField];
+                areapath = fields[areaPathField];
+            }
+            setStatus("getting teams...");
+            const teams = await getTeamsForAreaPathFromCache(project, areapath, skipCache);
             return teams.map(({name}) => name);
         };
         const getIsBoardEnabled = async (team: string) => {
@@ -139,15 +152,12 @@ export class BoardModel {
             }
             return await getEnabledBoards(this.projectName, team);
         }
+        let wiPromise: Promise<WorkItem>;
         try {
             setStatus("getting webcontext...");
             const { project } = VSS.getWebContext();
-            setStatus("getting workItem...");
-            const wi = await getWorkItem(workItemId, this.options.readonly && project.name, this.options.batchWindow);
-            this.refreshTimings.measure("getWorkItem");
-            this.workItem = wi;
-            this.projectName = wi.fields[projectField];
-            setStatus("getting teams...");
+            // if on the form we can get the full work item and the possible teams at the same time
+            wiPromise = getWorkItem(workItemId, this.options.readonly && project.name, this.options.batchWindow);
             const teams = await getTeams();
             this.refreshTimings.measure("cacheRead");
             this.teams = teams;
@@ -155,6 +165,11 @@ export class BoardModel {
                 this.completedRefresh();
                 return;
             }
+            setStatus("getting workItem...");
+            const wi = await wiPromise;
+            this.refreshTimings.measure("getWorkItem");
+            this.workItem = wi;
+            this.projectName = wi.fields[projectField];
             try {
                 const teamBoards = await Promise.all(teams.map(async (team) => {
                     setStatus("getting board references & backlog configuration...");
