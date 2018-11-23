@@ -40,16 +40,19 @@
         
         // Load main entry point for extension
         VSS.require([
-            'TFS/Work/RestClient',
-            'q',
-            'TFS/WorkItemTracking/RestClient',
-            'VSS/WebApi/Contracts',
-            'TFS/WorkItemTracking/Contracts',
-            'TFS/Core/RestClient',
-            'TFS/Work/Contracts',
-            'VSS/Controls',
-            'VSS/Controls/Combos',
-            'TFS/WorkItemTracking/Services',
+            "TFS/Work/RestClient",
+            "q",
+            "react",
+            "react-dom",
+            "TFS/WorkItemTracking/BatchRestClient",
+            "TFS/WorkItemTracking/RestClient",
+            "VSS/WebApi/Contracts",
+            "TFS/WorkItemTracking/Contracts",
+            "TFS/Core/RestClient",
+            "TFS/Work/Contracts",
+            "VSS/Controls",
+            "VSS/Controls/Combos",
+            "TFS/WorkItemTracking/Services",
             "scripts/boardGroup"
             ], function () {
             VSS.notifyLoadSucceeded();
