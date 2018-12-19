@@ -8,7 +8,7 @@ const inlinesource = require('gulp-inline-source');
 const contentFolder = 'dist';
 
 gulp.task('clean', () => {
-    return gulp.src([contentFolder, '*.vsix'])
+    return gulp.src([contentFolder, '*.vsix'], { allowEmpty: true })
         .pipe(clean());
 });
 gulp.task('copy-sdk', () => {
