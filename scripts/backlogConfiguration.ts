@@ -2,6 +2,7 @@ import { TeamContext } from 'TFS/Core/Contracts';
 import { BacklogConfiguration, TeamSetting } from 'TFS/Work/Contracts';
 import { getClient as getWorkClient } from 'TFS/Work/RestClient';
 import { setStatus } from './tryExecute';
+import { trackEvent } from './events';
 
 const settings: {
     [projectName: string]: {
@@ -54,18 +55,23 @@ function loadSettings(projectName: string, teamName: string) {
 }
 
 export async function getEnabledBoards(projectName: string, teamName: string): Promise<(board: string) => boolean> {
-    loadSettings(projectName, teamName);
-    const { backlogConfigurationData, teamSettingsData } = settings[projectName][teamName];
-    const [backlogSettings, teamSettings] = await Promise.all([
-        backlogConfigurationData,
-        teamSettingsData
-    ]);
-    const boards = backlogConfigurationData ? null : [
-        ...backlogSettings.portfolioBacklogs,
-        backlogSettings.requirementBacklog,
-        backlogSettings.taskBacklog
-    ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
-    return (board: string) => !boards || boards.indexOf(board) >= 0;
+    try {
+        loadSettings(projectName, teamName);
+        const { backlogConfigurationData, teamSettingsData } = settings[projectName][teamName];
+        const [backlogSettings, teamSettings] = await Promise.all([
+            backlogConfigurationData,
+            teamSettingsData
+        ]);
+        const boards = backlogConfigurationData ? null : [
+            ...backlogSettings.portfolioBacklogs,
+            backlogSettings.requirementBacklog,
+            backlogSettings.taskBacklog
+        ].filter(backlog => teamSettings.backlogVisibilities[backlog.id]).map(b => b.name);
+        return (board: string) => !boards || boards.indexOf(board) >= 0;
+    } catch (e) {
+        trackEvent("getEnabledBoardsError", {message: e + ""});
+        return () => true;
+    }
 }
 
 export async function getOrderFieldName(project: string): Promise<string> {
