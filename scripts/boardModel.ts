@@ -72,6 +72,9 @@ export class BoardModel {
             return this.boards.filter(b => b.teamName === team)[0];
         }
         const boards = this.boards.reverse();
+        if (!this.workItem) {
+            return undefined;
+        }
         const areaParts = this.workItem.fields[areaPathField].split("\\");
         let boardByAreaPath: ITeamBoard | undefined = undefined;
         while (!boardByAreaPath && areaParts.length > 0) {
@@ -99,6 +102,7 @@ export class BoardModel {
 
     private completedRefresh() {
         this.refreshTimings.measure("totalTime", false);
+        const fields = this.workItem ? this.workItem.fields : {};
         trackEvent("boardRefresh", {
             location: this.options.location,
             teamCount: String(this.teams.length),
@@ -107,7 +111,7 @@ export class BoardModel {
             wiHasBoardData: String(!!this.getColumn()),
             host: VSS.getWebContext().host.authority,
             firstRefresh: String(firstRefresh),
-            boardDatasOnWi: String(Object.keys(this.workItem.fields).filter(f => f.match("_Kanban.Column$")).length)
+            boardDatasOnWi: String(Object.keys(fields).filter(f => f.match("_Kanban.Column$")).length)
         }, this.refreshTimings.measurements);
         firstRefresh = false;
     }
@@ -126,7 +130,7 @@ export class BoardModel {
     public async refresh(workItemId: number): Promise<void> {
         this.refreshTimings = this.createRefreshTimings();
         this.boards = [];
-        
+
         const getTeams = async (skipCache?: string): Promise<string[]> => {
             if (this.options.knownTeam) {
                 return [this.options.knownTeam];
@@ -183,7 +187,7 @@ export class BoardModel {
                     return this.findAssociatedBoard(team, boards);
                 }));
                 this.refreshTimings.measure("getAllBoards");
-        
+
                 this.boards = teamBoards.filter(t => t.haveWiData);
                 this.completedRefresh();
             } catch (e) {
@@ -226,7 +230,7 @@ export class BoardModel {
         trackEvent("UpdateBoardField", { field, location: this.options.location }, this.fieldTimings.measurements);
         const patchDocument: JsonPatchDocument & JsonPatchOperation[] = [];
         if (field === "rowField" && !val) {
-            patchDocument.push(<JsonPatchOperation>{ 
+            patchDocument.push(<JsonPatchOperation>{
                 op: Operation.Remove,
                 path: `/fields/${this.getBoard(team).fields[field].referenceName}`
             });
@@ -253,7 +257,7 @@ export class BoardModel {
         }
         return states;
     }
-    
+
     public async getColumnIndex(team: string = "", move?: "move to top" | "move to bottom"): Promise<IPosition> {
         const {board} = this.getTeamBoard(team);
         const {columnField, doneField, rowField} = board.fields;
@@ -294,7 +298,7 @@ ORDER BY ${column.columnType === BoardColumnType.Outgoing ? `${closedDateField} 
             val: ids.indexOf(this.workItem.id),
             total: ids.length,
             isClosed: column.columnType === BoardColumnType.Outgoing,
-            
+
         };
         if (!move || (move === "move to top" && pos.val === 0)) {
             return pos;

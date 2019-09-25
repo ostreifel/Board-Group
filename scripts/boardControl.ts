@@ -19,7 +19,7 @@ export class BoardControl extends Control<{}> {
     private boardModel: BoardModel;
     private team: string;
     private clickTiming: Timings = new Timings();
-    
+
     // ui
     private readonly: boolean;
     private columnInput: Combo | null;
@@ -125,6 +125,7 @@ export class BoardControl extends Control<{}> {
         const boardUrl = `${uri}${projectName}/${this.team}/_backlogs/board/${boardName}`;
 
         this._element.html("");
+        const container = $("<div></div>").appendTo(this._element);
         const boardLink = $("<a/>").addClass("board-link").text(`${this.team}\\${boardName}`)
             .attr({
                 href: boardUrl,
@@ -139,7 +140,7 @@ export class BoardControl extends Control<{}> {
                 e.stopPropagation();
                 e.preventDefault();
             });
-        this._element.append(boardLink);
+        container.append(boardLink);
         const dropdown = $(`<ul hidden class=dropdown>${this.boardModel.getTeams().sort().map(t =>
             `<li class=${t === this.team ? 'selected' : 'unselected'}>${t}</li>`
         ).join('')}</ul>`);
@@ -155,12 +156,12 @@ export class BoardControl extends Control<{}> {
             });
         await createIcon(button[0], "ChevronDownSmall");
         if (this.boardModel.getTeams().length > 1) {
-            this._element.append(button);
-            this._element.append(dropdown);
+            container.append(button);
+            container.append(dropdown);
         }
         if (this.boardModel.getColumn(this.team)) {
-            this._element.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
-            this.columnInput = <Combo>BaseControl.createIn(Combo, this._element, columnOptions);
+            container.append($("<label/>").addClass("workitemcontrol-label").text("Column"));
+            this.columnInput = <Combo>BaseControl.createIn(Combo, container, columnOptions);
             this.columnInput._bind("dropDownToggled", (_, args: { isDropVisible: boolean }) => {
                 if (args.isDropVisible) {
                     const itemsShown = Math.min(5, this.boardModel.getBoard(this.team).columns.length);
@@ -174,11 +175,11 @@ export class BoardControl extends Control<{}> {
         } else {
             this.columnInput = null;
         }
-        this._element.append(`<div class="lane-input" />`);
-        this._element.append(`<div class="done-input" />`);
-        this._element.append(`<div class="col-index-input" />`);
-        this._element.append(`<div class="disclaimer">Board changes are saved immediately.</div>`);
-        this._element.append(`<div class="board-error"></div>`);
+        container.append(`<div class="lane-input" />`);
+        container.append(`<div class="done-input" />`);
+        container.append(`<div class="col-index-input" />`);
+        container.append(`<div class="disclaimer">Board changes are saved immediately.</div>`);
+        container.append(`<div class="board-error"></div>`);
         this.updateLaneInput();
         this.updateDoneInput();
         this.updateColumnIndexButton();
@@ -308,7 +309,7 @@ export class BoardControl extends Control<{}> {
                 upButton.removeAttr("disabled");
             }
             upButton.css({visibility: index.isClosed ? "hidden" : "show"});
-            
+
             downButton.unbind("click");
             downButton.click(() =>
                 this.boardModel.getColumnIndex(this.team, "move to bottom").
